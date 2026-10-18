@@ -48,9 +48,9 @@ python3 tools/verify.py --luau-bin /tmp/skyline-luau-0.743
 
 ## 回退与限制
 
-v21 源码保存在 backup-v21，完整已验证场景在 SkylineV21Verified.rbxlx。回退时同时恢复源码、清单和构建工具，不能只替换某个入口。发布目标沿用原 Place，不创建新体验。本次保留原远程消息名与 Attributes，降低迁移风险。
+早期 v21 备份仅保留在维护者本地，不随仓库分发。公开工程的可追溯历史从 Git 标签 v23 开始。回退时同时恢复源码、清单和构建工具，不能只替换某个入口。维护官方游戏时发布目标沿用原 Place；派生项目必须发布到自己的体验。本次保留原远程消息名与 Attributes，降低迁移风险。
 
-本目录现已初始化 Git，并从备份导入 v23 标签基线。GitHub 远端尚未连接；历史快照保留在本地但不随源码重复提交。当前外观存档适配和部分输入/动画逻辑仍在组装层，可随下一次具体功能继续拆分，避免一次性改动过多。
+本目录现已初始化 Git，并从备份导入 v23 标签基线。GitHub 远端已连接；历史快照保留在本地但不随源码重复提交。当前外观存档适配和部分输入/动画逻辑仍在组装层，可随下一次具体功能继续拆分，避免一次性改动过多。
 
 设备模拟可通过 StudioDeviceSimulatorService 设置预设和方向，测试时可用 FitToWindow 完整查看画面。官方接口参考：https://create.roblox.com/docs/reference/engine/classes/StudioDeviceSimulatorService 。当前验证使用 iPhone XR 横屏、iPad 第六代横屏/竖屏。测试环境云 API 关闭；如果开启云存档测试，请先使用隔离测试体验，避免回归测试改动正式玩家存档。
 

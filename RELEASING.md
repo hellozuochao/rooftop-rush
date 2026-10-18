@@ -1,5 +1,7 @@
 # 维护与发布流程
 
+以下原 Place 发布步骤仅适用于官方维护者。贡献者与派生项目须发布到自己的 Roblox 体验，不使用官方 PlaceId。源码和贡献采用 [MIT](LICENSE)；第三方素材见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
 1. 从 `main` 建分支，修改 `src/` 和地图生成器；新增模块必须登记到 `project.json`。
 2. 执行 `tools/verify.py`，确认编译、纯逻辑和地图/安装清单检查通过。
 3. 执行 `tools/build_qa.py`，在 Studio 测试副本导入 QA 包。服务端脚本放入 ServerScriptService，客户端脚本放入 StarterPlayerScripts。Workspace 的 QAMode 设为 Solo 或 Multi；多人测试使用 3 个客户端。
@@ -16,4 +18,4 @@ GitHub CI 已接通；每次运行的结果见仓库 Actions 页面，只有实�
 
 ## GitHub 连接
 
-私有仓库为 `https://github.com/hellozuochao/rooftop-rush`，本地 `origin` 已连接，`main`、`v23` 和 `v24` 已上传。保持源代码私有，不影响 Roblox 游戏公开游玩。后续提交通过 `git push` 上传；新版本标签通过 `git push origin <标签>` 上传。不要在源码、日志或 workflow 中写入账号密码、Cookie 或访问令牌。
+仓库为 `https://github.com/hellozuochao/rooftop-rush`，本地 `origin` 已连接，`main`、`v23` 和 `v24` 已上传。仓库公开状态与 Roblox 游戏可见性独立管理。后续提交通过 `git push` 上传；新版本标签通过 `git push origin <标签>` 上传。不要在源码、日志或 workflow 中写入账号密码、Cookie 或访问令牌。
