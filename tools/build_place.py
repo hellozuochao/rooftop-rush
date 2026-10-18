@@ -82,6 +82,30 @@ def sign(text, x, z):
     prop(label, 'string', 'Text', text)
     color(label, 'TextColor3', (240,250,255))
 
+def slide_guide(x, z, width, depth):
+    # A continuous luminous lower edge marks the real collision boundary (y=2).
+    part('SlideLowerEdge',(x,2.04,z-depth/2-.08),(width,.12,.16),cyan,decor,neon=True,collide=False)
+    for side in (-1,1):
+        part('SlideClearancePost',(x+side*(width/2+.12),1,z-depth/2-.08),(.16,2,.16),cyan,decor,neon=True,collide=False)
+        part('SlideFloorRail',(x+side*(width/2-.3),.05,z-2),(0.12,.1,depth+7),cyan,decor,neon=True,collide=False)
+    for dz in (-6,-4,-2):
+        part('SlideApproach',(x,.06,z+dz),(min(width-1,5),.12,.18),cyan,decor,neon=True,collide=False)
+    anchor=part('SlideHint',(x,8.2,z-depth/2-.2),(.1,.1,.1),parent=decor,collide=False)
+    prop(anchor,'float','Transparency',1)
+    gui=item('BillboardGui','SlideLabel',anchor)
+    prop(gui,'float','MaxDistance',75)
+    prop(gui,'bool','AlwaysOnTop',False)
+    size=prop(gui,'UDim2','Size','')
+    for key,val in [('XS',0),('XO',140),('YS',0),('YO',32)]: E.SubElement(size,key).text=str(val)
+    label=item('TextLabel','Text',gui)
+    size=prop(label,'UDim2','Size','')
+    for key,val in [('XS',1),('XO',0),('YS',1),('YO',0)]: E.SubElement(size,key).text=str(val)
+    prop(label,'float','BackgroundTransparency',.25)
+    color(label,'BackgroundColor3',(10,30,40))
+    color(label,'TextColor3',(170,245,255))
+    prop(label,'bool','TextScaled',True)
+    prop(label,'string','Text','↓ 滑铲穿过')
+
 gaps=item('Folder','Gaps',map_obj)
 coins=item('Folder','Collectibles',map_obj)
 pickups=item('Folder','Pickups',map_obj)
@@ -115,6 +139,7 @@ for n in range(12):
             continue
         y,height,depth=(1,2,1.4) if kind=='Hurdle' else (1.5,3,2.5) if kind=='Vault' else (4.5,5,4)
         part(kind,((n%3-1)*6,y,oz),(18 if n%4==0 else 12,height,depth),(215,98,63) if kind!='Slide' else (40,61,77),hazards,collide=True)
+        if kind=='Slide': slide_guide((n%3-1)*6,oz,18 if n%4==0 else 12,depth)
         part('ActionMark',(0,0.04,oz-7),(11,0.08,0.5),accent if kind!='Slide' else (83,197,210),decor,collide=False)
         for x in ((n%3-1)*6-6,(n%3-1)*6+6):
             part('ObstacleOutline',(x,y,oz),(0.12,height+0.1,depth+0.1),accent if kind!='Slide' else (83,197,210),decor,collide=False)
@@ -137,6 +162,7 @@ for stage in (3,5,7,9,10):
         kind='Slide' if (stage+k)%2 else 'Vault'
         y,height=(4.5,5) if kind=='Slide' else (1.5,3)
         part(kind,(x,y,base+offset),(10,height,2.5),(70,160,190) if kind=='Slide' else (215,120,65),hazards,collide=True)
+        if kind=='Slide': slide_guide(x,base+offset,10,2.5)
         part('LaneCue',(-x,.06,base+offset-7),(5,.12,3),green,decor,collide=False)
     sign('交错障碍 · 绿标换道 / 原道挑战',0,base+16)
 # Optional narrow outside bypass around the last three gaps, longer but no jump required.

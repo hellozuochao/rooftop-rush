@@ -1,0 +1,24 @@
+# Generated Studio files and historical snapshots
+*.rbxlx
+*.rbxmx
+*.rbxl
+*.rbxm
+backup-*/
+media/
+.DS_Store
+__pycache__/
+*.pyc
+.env
+.env.*
+tests/*-evidence.txt
+tests/*-offline.txt
+tests/*-source-check.txt
+tests/*-expected-sources.json
+V*-STATUS.txt
+
+.toolchain/
+tests/archive/
+
+# Legacy local documentation retained outside current source history
+README.txt
+TEST-REPORT-V22.md

@@ -3,8 +3,8 @@ local P = game:GetService("Players")
 local p = P.LocalPlayer
 local S = game:GetService("ReplicatedStorage")
 local Run = game:GetService("RunService")
-local event = S:WaitForChild("QAV23Control")
-local rpc = S:WaitForChild("QAV23Case")
+local event = S:WaitForChild("QAV24Control")
+local rpc = S:WaitForChild("QAV24Case")
 local ready = S:WaitForChild("RaceReady")
 local remote = S:WaitForChild("SkylineAction")
 local gui = p:WaitForChild("PlayerGui"):WaitForChild("RunnerHUD")
@@ -12,7 +12,7 @@ local controls = require(p.PlayerScripts:WaitForChild("PlayerModule")):GetContro
 local original = controls.GetMoveVector
 local function check(ok, label)
     assert(ok, label)
-    print("V23_CLIENT_CHECK", label)
+    print("V24_CLIENT_CHECK", label)
 end
 local function waitFor(fn, seconds, label)
     local deadline = os.clock() + seconds
@@ -25,7 +25,7 @@ local function waitFor(fn, seconds, label)
     error("Timeout: " .. label)
 end
 local Modal = require(p.PlayerScripts.ClientModules.Modal)
-local function v23UI()
+local function v24UI()
     waitFor(function()
         return p.PlayerGui:FindFirstChild("WardrobeHUD") and p.PlayerGui:FindFirstChild("SettingsHUD")
     end, 10, "new panels")
@@ -37,6 +37,14 @@ local function v23UI()
         check(p.PlayerGui.SettingsHUD.Settings.Visible == (name == "Settings"), "exclusive settings " .. name)
         check(not p.PlayerGui.WardrobeHUD.Closet.Visible, "launcher hidden behind modal")
     end
+    check(gui:GetAttribute("MusicVolume") == 0.15, "quiet default music")
+    check(p.PlayerGui.SettingsEntryHUD.Menu.Text == "设置", "settings entry renamed")
+    check(p.PlayerGui.SettingsHUD.Settings:FindFirstChild("Help", true) ~= nil, "game help available")
+    local instructions = p.PlayerGui.SettingsHUD.Settings:FindFirstChild("Instructions", true)
+    instructions.Visible = true
+    task.wait(0.2)
+    check(instructions.TextFits, "complete Chinese gameplay instructions fit")
+    instructions.Visible = false
     gui:SetAttribute("MusicVolume", 0)
     gui:SetAttribute("SFXVolume", 0)
     task.wait(0.1)
@@ -44,7 +52,7 @@ local function v23UI()
         game.SoundService.RaceMusic.Volume == 0 and game.SoundService.RaceSFX.Volume == 0,
         "audio mute settings"
     )
-    gui:SetAttribute("MusicVolume", 0.5)
+    gui:SetAttribute("MusicVolume", 0.15)
     gui:SetAttribute("SFXVolume", 0.75)
     check(not gui:FindFirstChild("Sprint"), "no sprint button")
     waitFor(function()
@@ -52,6 +60,7 @@ local function v23UI()
     end, 20, "licensed music loads")
     check(game.SoundService.RooftopChaser.IsPlaying, "music playing")
     Modal.Open("")
+    check(not p.PlayerGui.WardrobeHUD.Closet.Visible, "no standalone wardrobe launcher")
     local root = p.Character.HumanoidRootPart
     local before = root.Position
     controls.GetMoveVector = function()
@@ -196,7 +205,7 @@ local function uiAndRoute()
         end
         local stage = p.leaderstats.Stage.Value
         if stage ~= lastStage then
-            print("V23_STAGE", stage, z, p.leaderstats.Deaths.Value)
+            print("V24_STAGE", stage, z, p.leaderstats.Deaths.Value)
             lastStage = stage
         end
         cameraMismatch = workspace.CurrentCamera.CameraSubject == h and 0 or cameraMismatch + dt
@@ -204,14 +213,14 @@ local function uiAndRoute()
     end
     controls.GetMoveVector = original
     check(p.leaderstats.Stage.Value == 12, "route reaches all checkpoints")
-    print("V23_ROUTE_CLIENT_PASS", os.clock() - start, p.leaderstats.Deaths.Value, frames, worst)
+    print("V24_ROUTE_CLIENT_PASS", os.clock() - start, p.leaderstats.Deaths.Value, frames, worst)
     rpc:InvokeServer("Route", os.clock() - start)
     event:FireServer("ClientPass", "UI and full route")
 end
 event.OnClientEvent:Connect(function(kind)
     local ok, err = xpcall(function()
         if kind == "PrepTest" then
-            v23UI()
+            v24UI()
         elseif kind == "SpectateTest" then
             Modal.Open("")
             local race = p.PlayerGui.RaceHUD
@@ -254,7 +263,7 @@ event.OnClientEvent:Connect(function(kind)
     if not ok then
         controls.GetMoveVector = original
         event:FireServer("ClientFail", err)
-        warn("V23_CLIENT_FAIL", err)
+        warn("V24_CLIENT_FAIL", err)
     end
 end)
 waitFor(function()

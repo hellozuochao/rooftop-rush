@@ -8,7 +8,7 @@ function Audio.Start(p, gui)
     local sfxGroup = Instance.new("SoundGroup", SoundService)
     sfxGroup.Name = "RaceSFX"
     local function volumes()
-        musicGroup.Volume = gui:GetAttribute("MusicVolume") or 0.5
+        musicGroup.Volume = gui:GetAttribute("MusicVolume") or 0.15
         sfxGroup.Volume = gui:GetAttribute("SFXVolume") or 0.75
     end
     gui:GetAttributeChangedSignal("MusicVolume"):Connect(volumes)
@@ -22,8 +22,8 @@ function Audio.Start(p, gui)
         s.Volume = volume
         return s
     end
-    -- Roblox Creator Store / APM Music: Chaser, pulsating synths and percussion.
-    local music = sound("RooftopChaser", "rbxassetid://9042664292", musicGroup, 0.18)
+    -- Roblox Creator Store / APM Music: Spirit Warmth: soft piano, pads and gentle drums.
+    local music = sound("RooftopChaser", "rbxassetid://9042295159", musicGroup, 0)
     music.Looped = true
     music:Play()
     local function cue(file, pitch, volume)
@@ -35,7 +35,7 @@ function Audio.Start(p, gui)
     local state = game.ReplicatedStorage:WaitForChild("RaceState")
     local function phase()
         local racing = state:GetAttribute("Phase") == "Racing"
-        Tween:Create(music, TweenInfo.new(1.2), { Volume = racing and 0.38 or 0.16 }):Play()
+        Tween:Create(music, TweenInfo.new(1.2), { Volume = racing and 0.22 or 0.12 }):Play()
         if racing then
             cue("volume_slider.ogg", 1.6, 0.4)
         end

@@ -4,14 +4,14 @@ local S = game:GetService("ReplicatedStorage")
 local Run = game:GetService("RunService")
 assert(Run:IsStudio(), "QA must never run in production")
 local control = Instance.new("RemoteEvent", S)
-control.Name = "QAV23Control"
+control.Name = "QAV24Control"
 local rpc = Instance.new("RemoteFunction", S)
-rpc.Name = "QAV23Case"
+rpc.Name = "QAV24Case"
 local report = Instance.new("Folder", S)
-report.Name = "QAV23Report"
+report.Name = "QAV24Report"
 local function check(ok, label)
     assert(ok, label)
-    print("V23_PASS", label)
+    print("V24_PASS", label)
 end
 local function waitFor(fn, seconds, label)
     local deadline = os.clock() + seconds
@@ -64,10 +64,10 @@ control.OnServerEvent:Connect(function(p, kind, value)
     elseif kind == "ClientReady" then
         p:SetAttribute("QAReady", true)
     elseif kind == "ClientPass" then
-        print("V23_CLIENT_PASS", p.Name, value)
+        print("V24_CLIENT_PASS", p.Name, value)
         p:SetAttribute("QAClientPass", true)
     elseif kind == "ClientFail" then
-        warn("V23_CLIENT_FAIL", p.Name, value)
+        warn("V24_CLIENT_FAIL", p.Name, value)
         report:SetAttribute("Failed", true)
     end
 end)
@@ -128,7 +128,7 @@ local function solo()
             for _, k in { "ShieldUntil", "ImmuneUntil", "SlowUntil", "DecoyUntil", "ContactProtectedUntil" } do
                 b:SetAttribute(k, 0)
             end
-            b:SetAttribute("PunchReadyAt", t + 100)
+            runtime.Actors[b].AttackAt = t + 100
             r.Anchored = true
             r.CFrame = CFrame.new(i == 1 and 0 or 12, 3, i == 1 and 57 or 30 - i * 4)
             h.PlatformStand = true
@@ -237,10 +237,17 @@ local function solo()
     end, 20, "route restart")
     task.wait(0.5)
     task.spawn(function()
-        while state:GetAttribute("Phase")=="Racing" do
+        while state:GetAttribute("Phase") == "Racing" do
             for _, bot in workspace.RacersNPC:GetChildren() do
-                local st=runtime.Actors[bot]
-                print("V23_NPC_PROGRESS",bot.Name,bot.HumanoidRootPart.Position,st.Stage,bot:GetAttribute("Running"),bot.Humanoid.WalkSpeed)
+                local st = runtime.Actors[bot]
+                print(
+                    "V24_NPC_PROGRESS",
+                    bot.Name,
+                    bot.HumanoidRootPart.Position,
+                    st.Stage,
+                    bot:GetAttribute("Running"),
+                    bot.Humanoid.WalkSpeed
+                )
             end
             task.wait(20)
         end
@@ -253,7 +260,7 @@ local function solo()
     end, 210, "full route completion")
     check(not report:GetAttribute("Failed"), "client suite")
     check(p.leaderstats.Stage.Value == 12, "all twelve checkpoints")
-    print("V23_ROUTE_RESULT", p:GetAttribute("FinishTime"), p.leaderstats.Deaths.Value)
+    print("V24_ROUTE_RESULT", p:GetAttribute("FinishTime"), p.leaderstats.Deaths.Value)
     waitFor(function()
         return state:GetAttribute("Phase") == "Waiting"
     end, 185, "NPC completion / room finish")
@@ -261,7 +268,7 @@ local function solo()
     for _, row in state.Results:GetChildren() do
         if row:GetAttribute("BotName") then
             print(
-                "V23_NPC_RESULT",
+                "V24_NPC_RESULT",
                 row:GetAttribute("PlayerName"),
                 row:GetAttribute("State"),
                 row:GetAttribute("Time")
@@ -273,7 +280,7 @@ local function solo()
     end
     check(finished == 3, "all three NPC difficulties finish")
     report:SetAttribute("SoloPassed", true)
-    print("V23_SOLO_SUITE_PASS")
+    print("V24_SOLO_SUITE_PASS")
 end
 local function multi()
     waitFor(function()
@@ -320,17 +327,37 @@ local function multi()
     local ar = host.Character.HumanoidRootPart
     local br = b.Character.HumanoidRootPart
     ar.Anchored = true
-    ar.CFrame = CFrame.lookAt(Vector3.new(0, 3, 50), Vector3.new(10, 3, 50))
-    br.CFrame = CFrame.new(3.5, 3, 50)
+    ar.CFrame = CFrame.lookAt(Vector3.new(0, 3, 40), Vector3.new(0, 3, 60))
+    br.CFrame = CFrame.new(0, 3, 43.5)
     br.AssemblyLinearVelocity = Vector3.zero
     task.wait(0.3)
     control:FireClient(host, "Punch")
     task.wait(0.45)
     check(
-        br.Position.X > 4 and (b:GetAttribute("SlowUntil") or 0) > workspace:GetServerTimeNow(),
+        br.Position.Z > 47.5 and (b:GetAttribute("SlowUntil") or 0) > workspace:GetServerTimeNow(),
         "multiplayer punch displacement"
     )
+    local previousSwing = host:GetAttribute("PunchUntil")
+    runtime.Combat.Punch(host)
+    local secondSwing = host:GetAttribute("PunchUntil")
+    check(secondSwing > previousSwing, "attack repeats within one second without old cooldown")
+    for _ = 1, 20 do
+        runtime.Combat.Punch(host)
+    end
+    check(
+        host:GetAttribute("PunchUntil") == secondSwing,
+        "duplicate attack messages cannot multiply one swing"
+    )
     task.wait(3)
+    waitFor(function()
+        return host.Character
+            and host.Character:FindFirstChild("HumanoidRootPart")
+            and b.Character
+            and b.Character:FindFirstChild("HumanoidRootPart")
+    end, 12, "characters available after knockback")
+    ar = host.Character.HumanoidRootPart
+    br = b.Character.HumanoidRootPart
+    br.AssemblyLinearVelocity = Vector3.zero
     ar.Anchored = false
     ar.CFrame = CFrame.new(-6, 3, 50)
     ar.AssemblyLinearVelocity = Vector3.zero
@@ -355,7 +382,7 @@ local function multi()
         local _, h, r = rig(b)
         return b.Character ~= oldCharacter and h and h.Health > 0 and r and math.abs(r.Position.Z - 50) < 8
     end, 10, "impact fall recovery")
-    print("V23_RECOVERY_POSITION", b.Character.HumanoidRootPart.Position, b:GetAttribute("LastDeathReason"))
+    print("V24_RECOVERY_POSITION", b.Character.HumanoidRootPart.Position, b:GetAttribute("LastDeathReason"))
     check(math.abs(b.Character.HumanoidRootPart.Position.Z - 50) < 8, "impact fall recovery")
     control:FireClient(host, "End")
     task.wait(0.5)
@@ -370,7 +397,7 @@ local function multi()
     task.wait(0.5)
     check(state:GetAttribute("Phase") == "Waiting", "host ends room")
     report:SetAttribute("MultiPassed", true)
-    print("V23_MULTI_SUITE_PASS")
+    print("V24_MULTI_SUITE_PASS")
 end
 local ok, err = xpcall(function()
     if workspace:GetAttribute("QAMode") == "Multi" then
@@ -381,5 +408,5 @@ local ok, err = xpcall(function()
 end, debug.traceback)
 if not ok then
     report:SetAttribute("Failed", true)
-    warn("V23_SERVER_FAIL", err)
+    warn("V24_SERVER_FAIL", err)
 end

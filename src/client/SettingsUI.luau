@@ -30,6 +30,7 @@ return function(deps)
     rows.BackgroundTransparency = 1
     rows.BorderSizePixel = 0
     rows.ScrollBarThickness = 4
+    rows.Active = true
     rows.CanvasSize = UDim2.new()
     rows.AutomaticCanvasSize = Enum.AutomaticSize.Y
     local layout = Instance.new("UIListLayout", rows)
@@ -37,7 +38,7 @@ return function(deps)
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     for i, entry in
         {
-            { "MusicVolume", "背景音乐", { 0.0, 0.25, 0.5, 0.75, 1 }, 0.5 },
+            { "MusicVolume", "背景音乐", { 0, 0.05, 0.1, 0.15, 0.25, 0.5, 0.75, 1 }, 0.15 },
             { "SFXVolume", "动作与道具音效", { 0.0, 0.25, 0.5, 0.75, 1 }, 0.75 },
             { "ButtonScale", "操作按钮大小", { 0.85, 1, 1.15 }, 1 },
             { "ButtonTransparency", "按钮透明度", { 0.15, 0.35, 0.55 }, 0.35 },
@@ -73,5 +74,52 @@ return function(deps)
         gui:GetAttributeChangedSignal(entry[1]):Connect(refresh)
         refresh()
     end
+    local help = button("Help", "游戏说明 · 展开", rows)
+    help.LayoutOrder = -2
+    help.Size = UDim2.new(1, -6, 0, 44)
+    local instructions = label(
+        [[屋顶狂飙 · 玩法说明
+
+目标：通过 12 段屋顶赛道，抢先到达终点。绿色检查点会保存本局进度。
+
+移动：摇杆 / WASD 自由移动；持续前进逐步加速，松手平滑减速。跳跃越过矮墙与缺口，滑铲穿过青色低通道。没有独立冲刺按钮。
+
+攻击：点击或按住「攻击」/ F 连续挥拳，靠近并面向对手可击退、减速。障碍会挡住攻击；护盾和短暂保护可避免连续受控。
+
+道具：穿过彩色悬浮补给获取道具，最多保存 6 个。点击右侧道具选择使用时机；道具多时可以滚动。负面状态和剩余时间显示在顶部。
+
+单人：与可选择难度的 NPC 竞速。
+多人：房主在等待阶段开始比赛，已准备的玩家一起出发。比赛中加入的玩家等待下一局，可选择观战对象。
+
+准备区内可以走动，但不能提前离开。比赛中所有参赛者会发生碰撞；被撞落时会尝试在受撞位置附近恢复。
+
+设置：调整音乐、音效和操作按钮；从房间面板进入免费衣橱，选择服装与皮肤。]],
+        rows
+    )
+    instructions.Name = "Instructions"
+    instructions.LayoutOrder = -1
+    instructions.Size = UDim2.new(1, -12, 0, 0)
+    instructions.AutomaticSize = Enum.AutomaticSize.None
+    instructions.TextSize = 15
+    instructions.TextXAlignment = Enum.TextXAlignment.Left
+    instructions.TextYAlignment = Enum.TextYAlignment.Top
+    local function fitInstructions()
+        local width = math.max(80, rows.AbsoluteSize.X - 12)
+        local height = game:GetService("TextService"):GetTextSize(
+            instructions.Text,
+            instructions.TextSize,
+            instructions.Font,
+            Vector2.new(width, 10000)
+        ).Y
+        instructions.Size = UDim2.new(1, -12, 0, height + 20)
+    end
+    rows:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitInstructions)
+    instructions:GetPropertyChangedSignal("Text"):Connect(fitInstructions)
+    fitInstructions()
+    instructions.Visible = false
+    help.Activated:Connect(function()
+        instructions.Visible = not instructions.Visible
+        help.Text = instructions.Visible and "游戏说明 · 收起" or "游戏说明 · 展开"
+    end)
     Modal.Bind("Settings", panel)
 end

@@ -35,10 +35,10 @@ return function(deps)
         local st = actors[a]
         local _, _, r = rig(a)
         local t = now()
-        if not st or not r or not active(a) or t < (a:GetAttribute("PunchReadyAt") or 0) then
+        if not st or not r or not active(a) or t - (st.AttackAt or -math.huge) < C.Rules.AttackInterval then
             return
         end
-        a:SetAttribute("PunchReadyAt", t + C.Rules.PunchCooldown)
+        st.AttackAt = t -- One swing at a time; no cooldown or charge resource.
         a:SetAttribute("PunchUntil", t + 0.32)
         local best, nearest = nil, C.Rules.PunchRange
         for _, b in opponents(a) do
@@ -62,7 +62,7 @@ return function(deps)
             end
         end
         if not best then
-            notice(a, "拳套挥空 · 靠近并面向对手")
+            notice(a, "攻击挥空 · 靠近并面向对手")
             return
         end
         if
@@ -73,9 +73,9 @@ return function(deps)
         local _, _, br = rig(best)
         local d = br.Position - r.Position
         local direction = Vector3.new(d.X, 0, d.Z).Unit
-        knock(best, direction * 13 + Vector3.new(0, 18, 0), C.Rules.PunchRecovery)
-        notice(a, "拳套命中")
-        notice(best, "被拳套击退 · 短暂减速")
+        knock(best, direction * 28 + Vector3.new(0, 22, 0), C.Rules.PunchRecovery)
+        notice(a, "攻击命中")
+        notice(best, "被攻击击退 · 短暂减速")
     end
 
     return { Strike = strike, Punch = punch }

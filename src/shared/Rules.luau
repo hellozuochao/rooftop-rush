@@ -3,7 +3,7 @@ return table.freeze({
     InventoryCapacity = 6,
     SupplyCooldown = 12,
     PunchRange = 5,
-    PunchCooldown = 2.5,
+    AttackInterval = 0.32,
     PunchSlowdown = 0.7,
-    PunchRecovery = 0.25,
+    PunchRecovery = 0.45,
 })

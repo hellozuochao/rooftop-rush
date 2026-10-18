@@ -42,7 +42,7 @@ python3 tools/verify.py --luau-bin /tmp/skyline-luau-0.743
 
 参数指向本机官方 Luau 工具目录。该命令构建场景，检查几何及清单源码一致性，编译全部源码和测试，运行纯逻辑测试。它不等同于联机测试。
 
-`tools/build_qa.py` 单独生成 `tests/QAV23.rbxmx`。仅在 Studio 导入，将 QAV23Server 移到 ServerScriptService，QAV23Client 移到 StarterPlayerScripts。Workspace.QAMode 设 Solo 跑道具、外观、界面、12 关和 NPC；设 Multi 并启动 3 个客户端跑房间和玩家交互。结果输出 V23_*_PASS / FAIL。自动路线使用真实移动输入但不代表每条支路和真人手感已验证。
+`tools/build_qa.py` 单独生成 `tests/QAV24.rbxmx`。仅在 Studio 导入，将 QAV24Server 移到 ServerScriptService，QAV24Client 移到 StarterPlayerScripts。Workspace.QAMode 设 Solo 跑道具、外观、界面、12 关和 NPC；设 Multi 并启动 3 个客户端跑房间和玩家交互。结果输出 V24_*_PASS / FAIL。自动路线使用真实移动输入但不代表每条支路和真人手感已验证。
 
 发布前必须移除 QA 脚本和 QAMode 属性，确认正式场景仅含 project.json 所列源码。测试脚本不能进入生产环境。手机/iPad 模拟器只能验证布局和模拟操作，真实触屏、网络延迟、低端设备性能仍需真机验证。
 
@@ -50,7 +50,7 @@ python3 tools/verify.py --luau-bin /tmp/skyline-luau-0.743
 
 v21 源码保存在 backup-v21，完整已验证场景在 SkylineV21Verified.rbxlx。回退时同时恢复源码、清单和构建工具，不能只替换某个入口。发布目标沿用原 Place，不创建新体验。本次保留原远程消息名与 Attributes，降低迁移风险。
 
-此目录尚未使用 Git；这些备份不是无限历史版本。后续建议建立 Git 仓库并按可发布版本打标签。当前外观存档适配和部分输入/动画逻辑仍在组装层，可随下一次具体功能继续拆分，避免一次性改动过多。
+本目录现已初始化 Git，并从备份导入 v23 标签基线。GitHub 远端尚未连接；历史快照保留在本地但不随源码重复提交。当前外观存档适配和部分输入/动画逻辑仍在组装层，可随下一次具体功能继续拆分，避免一次性改动过多。
 
 设备模拟可通过 StudioDeviceSimulatorService 设置预设和方向，测试时可用 FitToWindow 完整查看画面。官方接口参考：https://create.roblox.com/docs/reference/engine/classes/StudioDeviceSimulatorService 。当前验证使用 iPhone XR 横屏、iPad 第六代横屏/竖屏。测试环境云 API 关闭；如果开启云存档测试，请先使用隔离测试体验，避免回归测试改动正式玩家存档。
 
@@ -58,10 +58,22 @@ v21 源码保存在 backup-v21，完整已验证场景在 SkylineV21Verified.rbx
 
 `Modal` 独占管理 PlayerGui.ActivePanel（Room / Wardrobe / Settings / 空），移动输入和各 HUD 都读取该状态。不得再在独立 ScreenGui 上绕过它打开面板。`SettingsUI` 提供音乐、音效音量和按钮大小/透明度，设置保留到本次客户端会话结束。
 
-`AudioController` 分离 RaceMusic / RaceSFX SoundGroup。背景音乐使用 Roblox Creator Store 的 APM Music《Chaser》（9042664292），适用于游戏内城市电子竞速；来源：https://create.roblox.com/store/asset/9042664292/Chaser 。动作音效使用 Roblox 内置 sounds 资源。电脑系统静音设置保持不变。
+`AudioController` 分离 RaceMusic / RaceSFX SoundGroup。背景音乐使用 Roblox Creator Store 的 APM Music《Spirit Warmth》（9042295159），默认音乐组音量 15%，比赛/等待音源音量分别为 0.22/0.12；来源：https://create.roblox.com/store/asset/9042295159 。动作音效使用 Roblox 内置 sounds 资源。电脑系统静音设置保持不变。
 
 `ItemVisuals` 只生成客户端补给外观：悬浮球、轨道粒子、光效，不修改服务端拾取中心和冷却逻辑；110 studs 外关闭动画与发射器，避免整条赛道持续渲染全部粒子。ItemService 的追踪弹带拖尾，地面技能使用圆形场。
 
 NPC 从参赛者角色克隆相同骨架，移除脚本/旧碰撞体，再应用同一衣橱服务。其 Animator 使用克隆人物 Animate 下的 idle/walk/run/jump/fall 动画；滑铲复用 Hud 的其他角色姿态叠加。移动加速使用共享 MovementMath，转身使用与玩家相同的指数插值。NPC 导航仍由难度控制，不能把视觉统一等同于真人级 AI。
 
 准备区包含客户端方向限制、服务端位置边界和可见侧栏。倒计时开始只定位一次，NPC 在倒计时创建并活动；比赛开始才获得 Running 和道具权限。独立 Sprint 远程分支及按钮已删除，Boost/Magnet 道具仍可临时提高速度。
+
+## v24 操作与维护
+
+SettingsEntryHUD 使用 DeviceSafeInsets，将设置入口放在顶部安全区右侧；主面板仍保留 Core UI 安全边距。独立衣橱入口永远隐藏，只从房间内进入。SettingsUI 内可展开的游戏说明与其他设置一起滚动。
+
+攻击客户端记录当前按下的触摸对象，避免松开摇杆误取消攻击；按住 F 或攻击按钮按挥拳周期重复，失去窗口焦点、打开面板或退出比赛会停止。服务端 AttackInterval=0.32 限制一个动作内重复消息，不再显示或施加原来的 2.5 秒冷却。目标的护盾、短暂免疫和实体遮挡仍然有效。
+
+攻击横向击退 28 studs/s、向上 22 studs/s，受击动作恢复 0.45 秒。碰撞额外反冲按相对接近速度和双方质量计算，作用方向相反，速度上限 14 studs/s；双方接触后短暂减速。实际位移受重力、障碍物和地形影响。
+
+地图生成器 slide_guide 为每一个 Slide 对齐真实 y=2 下沿和地面引导；新增标记全部不参与碰撞。地图检查验证标记数量、位置和碰撞属性，防止美术改动改变通行尺寸。
+
+GitHub workflow 对 main/PR/版本标签运行固定 Luau 0.743 的离线验证；版本标签通过后创建草稿 Release，Studio 发布仍人工检查目标 Place 和 QA 清理。

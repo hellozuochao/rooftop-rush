@@ -31,7 +31,12 @@ local function label(t, parent)
     l.TextWrapped = true
     return l
 end
-local menu = button("Menu", "房间 / 排名", gui)
+local topbar = Instance.new("ScreenGui", p.PlayerGui)
+topbar.Name = "SettingsEntryHUD"
+topbar.ResetOnSpawn = false
+topbar.DisplayOrder = 6
+topbar.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+local menu = button("Menu", "设置", topbar)
 menu.Size = UDim2.fromOffset(100, 30)
 menu.Position = UDim2.new(1, -112, 0, 8)
 local panel = Instance.new("Frame", gui)
@@ -81,7 +86,7 @@ scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 scroll.CanvasSize = UDim2.new()
 local layout = Instance.new("UIListLayout", scroll)
 layout.Padding = UDim.new(0, 5)
-for i, entry in { { "Wardrobe", "免费衣橱" }, { "Settings", "声音 / 操作设置" } } do
+for i, entry in { { "Wardrobe", "免费衣橱" }, { "Settings", "声音 / 操作 / 游戏说明" } } do
     local b = button(entry[1], entry[2], panel)
     b.Position = UDim2.new((i - 1) * 0.5, i == 1 and 12 or 6, 1, -128)
     b.Size = UDim2.new(0.5, -18, 0, 30)

@@ -27,18 +27,48 @@ local function label(t, parent)
     l.TextWrapped = true
     return l
 end
-local punchButton = button("Punch", "拳套 F")
-punchButton.Activated:Connect(function()
+local punchButton = button("Punch", "攻击 F")
+local UIS = game:GetService("UserInputService")
+local attacking = false
+local attackInput = nil
+local nextAttack = 0
+local function beginAttack()
+    attacking = true
     remote:FireServer("Punch")
-end)
-for _, d in { { "Punch", Enum.KeyCode.F }, { "Item", Enum.KeyCode.Q } } do
-    CAS:BindActionAtPriority("Race" .. d[1], function(_, state)
-        if state == Enum.UserInputState.Begin then
-            remote:FireServer(d[1])
-        end
-        return Enum.ContextActionResult.Sink
-    end, false, 3100, d[2])
+    nextAttack = workspace:GetServerTimeNow() + C.Rules.AttackInterval + 0.02
 end
+punchButton.InputBegan:Connect(function(input)
+    if
+        input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseButton1
+    then
+        attackInput = input
+        beginAttack()
+    end
+end)
+UIS.InputEnded:Connect(function(input)
+    if input == attackInput or input.KeyCode == Enum.KeyCode.F then
+        attacking = false
+        attackInput = nil
+    end
+end)
+UIS.WindowFocusReleased:Connect(function()
+    attacking = false
+end)
+CAS:BindActionAtPriority("RacePunch", function(_, state)
+    if state == Enum.UserInputState.Begin then
+        beginAttack()
+    else
+        attacking = false
+    end
+    return Enum.ContextActionResult.Sink
+end, false, 3100, Enum.KeyCode.F)
+CAS:BindActionAtPriority("RaceItem", function(_, state)
+    if state == Enum.UserInputState.Begin then
+        remote:FireServer("Item")
+    end
+    return Enum.ContextActionResult.Sink
+end, false, 3100, Enum.KeyCode.Q)
 local status = label("")
 status.Position = UDim2.fromOffset(12, 45)
 status.Size = UDim2.new(1, -24, 0, 24)
@@ -74,9 +104,14 @@ Run.RenderStepped:Connect(function(dt)
     else
         punchButton.Position = UDim2.new(1, -(48 + main * 2), 1, -20)
     end
-    local punchCD = math.max(0, (p:GetAttribute("PunchReadyAt") or 0) - now)
-    punchButton.Text = punchCD > 0 and string.format("拳套 %.1f", punchCD)
-        or (game:GetService("UserInputService").TouchEnabled and "拳套" or "拳套 F")
+    punchButton.Text = UIS.TouchEnabled and "攻击" or "攻击 F"
+    if not running then
+        attacking = false
+    end
+    if attacking and now >= nextAttack then
+        nextAttack = now + C.Rules.AttackInterval + 0.02
+        remote:FireServer("Punch")
+    end
     status.Text = string.format(
         "速度 %.0f / %d · 收集 %d/3",
         gui:GetAttribute("Speed") or 0,

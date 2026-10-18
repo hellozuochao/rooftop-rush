@@ -1,0 +1,47 @@
+name: Build and verify
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: luau-lang/luau
+          ref: '0.743'
+          path: .toolchain/luau
+      - name: Build pinned Luau compiler and interpreter
+        run: |
+          cmake -S .toolchain/luau -B .toolchain/build -DCMAKE_BUILD_TYPE=Release -DLUAU_BUILD_TESTS=OFF
+          cmake --build .toolchain/build --target Luau.Repl.CLI Luau.Compile.CLI -j2
+      - name: Build place, validate map and run logic tests
+        run: python3 tools/verify.py --luau-bin .toolchain/build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rooftop-rush-studio
+          path: |
+            SkylineSample.rbxlx
+            SkylineSample.rbxmx
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: rooftop-rush-studio
+      - name: Create reviewable draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" SkylineSample.rbxlx SkylineSample.rbxmx --draft --title "Rooftop Rush $RELEASE_TAG" --notes "Built and offline-verified Studio files. See the version test report for runtime verification. Roblox publication is a separate Studio step."

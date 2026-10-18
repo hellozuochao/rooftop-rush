@@ -85,12 +85,12 @@ return function(deps)
             recoil.Attachment0 = attachment
             recoil.RelativeTo = Enum.ActuatorRelativeTo.World
             recoil.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
-            recoil.VectorVelocity = Vector3.new(delta.X, 12, delta.Z)
+            recoil.VectorVelocity = Vector3.new(delta.X, math.min(delta.Y, 22), delta.Z)
             recoil.ForceLimitsEnabled = true
             recoil.MaxForce = r.AssemblyMass * 1200
             recoil.Parent = r
-            Debris:AddItem(recoil, 0.18)
-            Debris:AddItem(attachment, 0.2)
+            Debris:AddItem(recoil, 0.24)
+            Debris:AddItem(attachment, 0.26)
         end
         local untilTime = now() + duration
         a:SetAttribute("PhysicsOwnedUntil", untilTime)
@@ -149,12 +149,12 @@ return function(deps)
                     local closing = math.max(0, (av - bv):Dot(normal))
                     if closing > 3 then
                         -- The engine resolves solid contact; a small equal/opposite impulse adds readable recoil.
-                        local impulse = math.min(closing * 0.2, 6)
+                        local impulse = math.min(closing * 0.45, 14)
                             / (1 / ar.AssemblyMass + 1 / br.AssemblyMass)
-                        knock(a, -normal * (impulse / ar.AssemblyMass), 0.15)
-                        knock(b, normal * (impulse / br.AssemblyMass), 0.15)
+                        knock(a, -normal * (impulse / ar.AssemblyMass), 0.25)
+                        knock(b, normal * (impulse / br.AssemblyMass), 0.25)
                         for _, actor in { a, b } do
-                            actor:SetAttribute("ContactUntil", t + 0.3)
+                            actor:SetAttribute("ContactUntil", t + 0.45)
                             actor:SetAttribute("ContactScale", math.clamp(1 - closing / 90, 0.65, 0.95))
                             actor:SetAttribute("ContactX", 0)
                         end

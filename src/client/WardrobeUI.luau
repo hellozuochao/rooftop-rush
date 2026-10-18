@@ -110,7 +110,7 @@ return function(deps)
     end
     Modal.Bind("Wardrobe", panel, refreshPreview)
     local function update(running)
-        closet.Visible = not running and Modal.Get() == ""
+        closet.Visible = false -- Wardrobe is available inside Settings / Room only.
         if panel.Visible then
             for i, b in cards do
                 b.Text = C.OutfitName(i)

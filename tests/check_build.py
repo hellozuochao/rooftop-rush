@@ -66,3 +66,16 @@ for supply in children('Pickups'):
     category=next(i for i in supply.findall('Item') if name(i)=='Category')
     assert category.findtext('./Properties/string[@name="Value"]') in ('机动补给','防御补给','攻击补给')
 print('PASS: 20 extra lane obstacles, 3 outer bypasses, every supply categorized.')
+
+slides=[h for h in hazards if name(h)=='Slide']
+edges=[d for d in children('Decor') if name(d)=='SlideLowerEdge']
+assert len(slides)==len(edges)
+for h in slides:
+    x,y,z=xyz(h);w,height,depth=size(h)
+    assert abs(y-height/2-2)<.001,'slide opening clearance changed'
+    edge=next(e for e in edges if abs(xyz(e)[0]-x)<.001 and abs(xyz(e)[2]-(z-depth/2-.08))<.001)
+    assert abs(xyz(edge)[1]-2.04)<.001 and size(edge)[0]==w
+for d in children('Decor'):
+    if (name(d) or '').startswith('Slide'):
+        assert d.findtext('./Properties/bool[@name="CanCollide"]')=='false','guide blocks passage'
+print('PASS: every slide opening has an aligned nonblocking clearance guide.')
