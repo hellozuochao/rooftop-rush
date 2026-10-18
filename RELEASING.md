@@ -8,12 +8,12 @@
 6. 保存版本快照；从原游戏工程发布到 Roblox，确认 PlaceId 为 116603842981489，检查 PublishSuccessful。生成文件单独打开不带原游戏发布身份，不要误建新体验。
 7. 提交代码与测试报告，打版本标签。推送标签会运行 CI 并生成含 Studio 构建文件的 GitHub **草稿** Release，审阅后再公开 Release。
 
-GitHub CI 尚未在线运行；只有本地实际运行的检查可计入当前验证结果。CI 不包含 Roblox 凭证，也不会自动替换线上体验。
+GitHub CI 已接通；每次运行的结果见仓库 Actions 页面，只有实际通过的检查可计入对应版本的验证结果。CI 不包含 Roblox 凭证，也不会自动替换线上体验。
 
 ## 回退
 
 优先在新分支从历史标签构建，验证后重新发布到同一 Roblox Place；也可使用 Creator Dashboard 的历史版本恢复。Git 标签保存代码状态，Roblox 发布版本保存线上状态，二者需在测试报告中对应记录。
 
-## GitHub 首次连接
+## GitHub 连接
 
-网站限制解除并登录后，在自己的账号下创建私有 `rooftop-rush` 仓库，保持源代码私有，不影响 Roblox 游戏公开游玩。关联远端并推送 main 和版本标签。不要在源码、日志或 workflow 中写入账号密码、Cookie 或访问令牌。
+私有仓库为 `https://github.com/hellozuochao/rooftop-rush`，本地 `origin` 已连接，`main`、`v23` 和 `v24` 已上传。保持源代码私有，不影响 Roblox 游戏公开游玩。后续提交通过 `git push` 上传；新版本标签通过 `git push origin <标签>` 上传。不要在源码、日志或 workflow 中写入账号密码、Cookie 或访问令牌。

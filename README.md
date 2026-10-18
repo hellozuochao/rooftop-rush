@@ -38,6 +38,6 @@ git switch -c feature/my-change
 git switch -c experiment/from-v23 v23
 ```
 
-本地仓库已初始化；GitHub 远端尚未创建，等待解除 github.com 网站访问限制。初始导入提交由自动化身份 Codex <codex@localhost> 标记，没有设置或修改全局 Git 身份。
+GitHub 私有仓库：[hellozuochao/rooftop-rush](https://github.com/hellozuochao/rooftop-rush)。本地 `main` 已关联 `origin/main`，`v23` 和 `v24` 历史标签已上传。初始导入提交由自动化身份 Codex <codex@localhost> 标记，没有设置或修改全局 Git 身份。
 
 音乐来自 Roblox Creator Store 的 APM Music：[Spirit Warmth](https://create.roblox.com/store/asset/9042295159)。工程只引用音频资产，不分发音频文件。其他素材的使用仍须遵循各自许可。
