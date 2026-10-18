@@ -105,11 +105,14 @@ return function(deps)
         -- Persistent effects communicate duration to other racers; first-person HUD mirrors these attributes.
         for _,entry in {{"SprintUntil","Boost"},{"ShieldUntil","Shield"},{"DecoyUntil","Decoy"},{"VacuumUntil","Vacuum"},{"ImmuneUntil","Cleanse"}} do
             local name="ActiveItem"..entry[2]
+            local key=entry[2]=="Boost" and a:GetAttribute("SprintItem")=="Magnet" and "Magnet" or entry[2]
             local visual=c:FindFirstChild(name)
+            if visual and visual:GetAttribute("ItemKey")~=key then visual:Destroy();visual=nil end
             local enabled=(a:GetAttribute(entry[1]) or 0)>t
             if enabled and not visual then
                 visual=Instance.new("Model",c)
                 visual.Name=name
+                visual:SetAttribute("ItemKey",key)
                 if entry[2]=="Shield" then
                     local sphere=Instance.new("Part",visual)
                     sphere.Name="ShieldBubble"
@@ -123,7 +126,7 @@ return function(deps)
                     sphere.CanTouch=false
                     sphere.CanQuery=false
                 else
-                    local icon=Art.Create(entry[2],visual)
+                    local icon=Art.Create(key,visual)
                     icon:ScaleTo(entry[2]=="Decoy" and 1.6 or 0.75)
                 end
             elseif not enabled and visual then

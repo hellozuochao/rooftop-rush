@@ -22,3 +22,6 @@ tests/archive/
 # Legacy local documentation retained outside current source history
 README.txt
 TEST-REPORT-V22.md
+
+# Studio local file locks
+*.rbxlx.lock

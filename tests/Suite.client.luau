@@ -3,8 +3,8 @@ local P = game:GetService("Players")
 local p = P.LocalPlayer
 local S = game:GetService("ReplicatedStorage")
 local Run = game:GetService("RunService")
-local event = S:WaitForChild("QAV24Control")
-local rpc = S:WaitForChild("QAV24Case")
+local event = S:WaitForChild("QAV25Control")
+local rpc = S:WaitForChild("QAV25Case")
 local ready = S:WaitForChild("RaceReady")
 local remote = S:WaitForChild("SkylineAction")
 local gui = p:WaitForChild("PlayerGui"):WaitForChild("RunnerHUD")
@@ -12,7 +12,7 @@ local controls = require(p.PlayerScripts:WaitForChild("PlayerModule")):GetContro
 local original = controls.GetMoveVector
 local function check(ok, label)
     assert(ok, label)
-    print("V24_CLIENT_CHECK", label)
+    print("V25_CLIENT_CHECK", label)
 end
 local function waitFor(fn, seconds, label)
     local deadline = os.clock() + seconds
@@ -25,7 +25,7 @@ local function waitFor(fn, seconds, label)
     error("Timeout: " .. label)
 end
 local Modal = require(p.PlayerScripts.ClientModules.Modal)
-local function v24UI()
+local function v25UI()
     waitFor(function()
         return p.PlayerGui:FindFirstChild("WardrobeHUD") and p.PlayerGui:FindFirstChild("SettingsHUD")
     end, 10, "new panels")
@@ -74,6 +74,40 @@ local function v24UI()
     event:FireServer("PrepPassed")
 end
 local function uiAndRoute()
+    check(p.CameraMode==Enum.CameraMode.LockFirstPerson,"first-person mode")
+    check(workspace.CurrentCamera.CameraType==Enum.CameraType.Custom,"native input camera")
+    local Art=require(S.SharedModules.ItemArt)
+    local count=0
+    for key in Art.Colors do
+        local model=Art.Create(key,workspace)
+        check(#model:GetChildren()>0,"item model "..key)
+        for _,part in model:GetChildren() do
+            check(not part.CanCollide and not part.CanQuery,"visual does not block physics "..key)
+        end
+        model:Destroy()
+        count+=1
+    end
+    check(count==14,"all item models")
+    local Camera=require(p.PlayerScripts.ClientModules.CameraController)
+    local cam=workspace.CurrentCamera
+    local root=p.Character.HumanoidRootPart
+    local hum=p.Character.Humanoid
+    for _,forward in {Vector3.xAxis,Vector3.zAxis,-Vector3.xAxis,-Vector3.zAxis} do
+        cam.CFrame=CFrame.lookAt(root.Position,root.Position+forward)
+        local move=Camera.Direction(Vector3.new(0,0,-1))
+        check((move-forward).Magnitude<0.001,"movement follows view")
+    end
+    cam.CFrame=CFrame.lookAt(root.Position,root.Position+Vector3.zAxis)
+    gui:SetAttribute("SlideBlend",0)
+    Camera.Update(p,gui,root,hum,true,1)
+    local standing=cam.CFrame.Position.Y
+    gui:SetAttribute("SlideBlend",1)
+    Camera.Update(p,gui,root,hum,true,1)
+    check(cam.CFrame.Position.Y < 2 and cam.CFrame.Position.Y > 0,"slide eyes fit under two-stud opening")
+    check(standing-cam.CFrame.Position.Y > 2,"slide lowers first-person eyes")
+    check(cam.CFrame.UpVector:Dot(Vector3.yAxis)>0.99,"slide keeps horizon level")
+    gui:SetAttribute("SlideBlend",0)
+    Camera.Update(p,gui,root,hum,true,1)
     local old = p:GetAttribute("Outfit")
     remote:FireServer("Outfit", 0 / 0)
     task.wait(0.25)
@@ -99,6 +133,14 @@ local function uiAndRoute()
             end
         end
         check(visible == count, "no empty slots")
+        for _,slot in gui.QuickItems:GetChildren() do
+            if slot:IsA("TextButton") and slot.Visible then
+                local icon=slot:FindFirstChild("ItemIcon")
+                local caption=slot:FindFirstChildOfClass("TextLabel")
+                check(icon and caption and caption.TextFits,"readable item icon and caption")
+                check(icon.AbsolutePosition.X+icon.AbsoluteSize.X<=caption.AbsolutePosition.X,"icon does not overlap caption")
+            end
+        end
     end
     for _, scale in { 0.85, 1, 1.15 } do
         gui:SetAttribute("ButtonScale", scale)
@@ -206,7 +248,7 @@ local function uiAndRoute()
         end
         local stage = p.leaderstats.Stage.Value
         if stage ~= lastStage then
-            print("V24_STAGE", stage, z, p.leaderstats.Deaths.Value)
+            print("V25_STAGE", stage, z, p.leaderstats.Deaths.Value)
             lastStage = stage
         end
         cameraMismatch = workspace.CurrentCamera.CameraSubject == h and 0 or cameraMismatch + dt
@@ -214,14 +256,21 @@ local function uiAndRoute()
     end
     controls.GetMoveVector = original
     check(p.leaderstats.Stage.Value == 12, "route reaches all checkpoints")
-    print("V24_ROUTE_CLIENT_PASS", os.clock() - start, p.leaderstats.Deaths.Value, frames, worst)
+    print("V25_ROUTE_CLIENT_PASS", os.clock() - start, p.leaderstats.Deaths.Value, frames, worst)
     rpc:InvokeServer("Route", os.clock() - start)
     event:FireServer("ClientPass", "UI and full route")
 end
-event.OnClientEvent:Connect(function(kind)
+event.OnClientEvent:Connect(function(kind, value)
     local ok, err = xpcall(function()
-        if kind == "PrepTest" then
-            v24UI()
+        if kind == "ObserveShield" then
+            local target=P:GetPlayerByUserId(value)
+            waitFor(function() return target and target.Character and target.Character:FindFirstChild("ActiveItemShield") end,5,"replicated shield")
+            local bubble=target.Character.ActiveItemShield.ShieldBubble
+            check(bubble.Transparency<1 and not bubble.CanCollide,"other player shield visible without collision")
+            check(p.PlayerGui.SettingsHUD.Settings:FindFirstChild("GameVersion",true).Text:find("v25",1,true)~=nil,"client version display")
+            event:FireServer("VisualPassed")
+        elseif kind == "PrepTest" then
+            v25UI()
         elseif kind == "SpectateTest" then
             Modal.Open("")
             local race = p.PlayerGui.RaceHUD
@@ -241,13 +290,15 @@ event.OnClientEvent:Connect(function(kind)
             )
             race:SetAttribute("SpectateName", "departed-player")
             task.wait(0.3)
-            check(race:GetAttribute("SpectateName") == "All", "departed target returns to overview")
+            check(race:GetAttribute("SpectateName") == "All", "departed target follows leader")
             event:FireServer("SpectatePassed")
         elseif kind == "UIAndRoute" then
             uiAndRoute()
         elseif kind == "Move" then
             controls.GetMoveVector = function()
-                return Vector3.new(0, 0, -1)
+                local look = workspace.CurrentCamera.CFrame.LookVector
+                local forward = Vector3.new(look.X,0,look.Z).Unit
+                return Vector3.new(Vector3.xAxis:Dot(forward:Cross(Vector3.yAxis)),0,-Vector3.xAxis:Dot(forward))
             end
         elseif kind == "Stop" then
             controls.GetMoveVector = original
@@ -264,7 +315,7 @@ event.OnClientEvent:Connect(function(kind)
     if not ok then
         controls.GetMoveVector = original
         event:FireServer("ClientFail", err)
-        warn("V24_CLIENT_FAIL", err)
+        warn("V25_CLIENT_FAIL", err)
     end
 end)
 waitFor(function()

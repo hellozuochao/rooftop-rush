@@ -5,7 +5,7 @@
 
 ## 统一版本
 
-根目录 `VERSION` 是游戏版本号，目前 `v25` 是候选版本，尚未发布。
+根目录 `VERSION` 是游戏版本号。正式发布状态以同名 GitHub Release 的回执为准。
 构建将版本和完整 Git 提交 SHA 写入 `ReplicatedStorage/BuildInfo`；服务端补充
 实际 `game.PlaceVersion`，设置面板显示游戏版本与当前服务器的 Roblox 平台版本。
 平台版本由 Roblox 分配，通过发布记录与 GitHub 标签对应，不强求数字相同。
@@ -20,10 +20,10 @@ v23、v24 历史标签保持不变，不追填未经核实的平台版本。
    python3 tools/verify.py --luau-bin /absolute/path/to/luau-bin
    ```
    新生产模块须登记 `project.json`。修改生成的 Studio 文件不能替代修改源码。
-3. 在 Studio 本地试玩。需要集成测试时运行 `python3 tools/build_qa.py`，
-   将独立 QA 包的服务端脚本移至 ServerScriptService，客户端脚本移至
-   StarterPlayerScripts；Workspace.QAMode 设 Solo 验证单人，设 Multi 配合
-   三个客户端验证多人。正式构建不得包含 QA 脚本或 QAMode。
+3. 在 Studio 本地试玩。集成测试运行 `python3 tools/build_qa.py --place Solo`，
+   打开生成的 `tests/QAV25Solo.rbxlx` 本地试玩；多人使用 `--place Multi`
+   生成 `tests/QAV25Multi.rbxlx`，启动三个客户端验证。
+   这些独立测试文件自动安装 QA 脚本并选择模式，禁止发布。正式构建不得包含 QA 脚本或 QAMode。
    按改动验证移动、道具、碰撞、NPC、准备/观战、版本显示和手机/iPad 布局。
    音频、真实触屏和设备性能需单独验证，如未测必须注明。
 4. 将最终源码、版本号和说明提交并推送 GitHub，等待自动检查通过。记录完整提交

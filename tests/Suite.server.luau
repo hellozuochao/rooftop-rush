@@ -4,14 +4,14 @@ local S = game:GetService("ReplicatedStorage")
 local Run = game:GetService("RunService")
 assert(Run:IsStudio(), "QA must never run in production")
 local control = Instance.new("RemoteEvent", S)
-control.Name = "QAV24Control"
+control.Name = "QAV25Control"
 local rpc = Instance.new("RemoteFunction", S)
-rpc.Name = "QAV24Case"
+rpc.Name = "QAV25Case"
 local report = Instance.new("Folder", S)
-report.Name = "QAV24Report"
+report.Name = "QAV25Report"
 local function check(ok, label)
     assert(ok, label)
-    print("V24_PASS", label)
+    print("V25_PASS", label)
 end
 local function waitFor(fn, seconds, label)
     local deadline = os.clock() + seconds
@@ -57,17 +57,19 @@ rpc.OnServerInvoke = function(p, kind, value)
     end
 end
 control.OnServerEvent:Connect(function(p, kind, value)
-    if kind == "SpectatePassed" then
+    if kind == "VisualPassed" then
+        p:SetAttribute("QAVisualPassed",true)
+    elseif kind == "SpectatePassed" then
         p:SetAttribute("QASpectatePassed", true)
     elseif kind == "PrepPassed" then
         p:SetAttribute("QAPrepPassed", true)
     elseif kind == "ClientReady" then
         p:SetAttribute("QAReady", true)
     elseif kind == "ClientPass" then
-        print("V24_CLIENT_PASS", p.Name, value)
+        print("V25_CLIENT_PASS", p.Name, value)
         p:SetAttribute("QAClientPass", true)
     elseif kind == "ClientFail" then
-        warn("V24_CLIENT_FAIL", p.Name, value)
+        warn("V25_CLIENT_FAIL", p.Name, value)
         report:SetAttribute("Failed", true)
     end
 end)
@@ -166,8 +168,14 @@ local function solo()
             runtime.Inventory.Add(target, "Shield")
         end
         runtime.Items.Use(p)
+        check(p:GetAttribute("LastUsedItem")==item, item.." successful use visual event")
         task.wait((item == "Leader" and 2) or ((item == "Rocket" or item == "Steal") and 1.4) or 0.15)
         local t = workspace:GetServerTimeNow()
+        local persistent=({Boost="Boost",Magnet="Boost",Shield="Shield",Cleanse="Cleanse",Decoy="Decoy",Vacuum="Vacuum"})[item]
+        if persistent then
+            local effect=p.Character:FindFirstChild("ActiveItem"..persistent)
+            check(effect and effect:GetAttribute("ItemKey")==item, item.." matching active effect")
+        end
         if item == "Boost" or item == "Magnet" then
             check((p:GetAttribute("SprintUntil") or 0) > t, item)
         elseif item == "Shield" then
@@ -241,7 +249,7 @@ local function solo()
             for _, bot in workspace.RacersNPC:GetChildren() do
                 local st = runtime.Actors[bot]
                 print(
-                    "V24_NPC_PROGRESS",
+                    "V25_NPC_PROGRESS",
                     bot.Name,
                     bot.HumanoidRootPart.Position,
                     st.Stage,
@@ -260,7 +268,7 @@ local function solo()
     end, 210, "full route completion")
     check(not report:GetAttribute("Failed"), "client suite")
     check(p.leaderstats.Stage.Value == 12, "all twelve checkpoints")
-    print("V24_ROUTE_RESULT", p:GetAttribute("FinishTime"), p.leaderstats.Deaths.Value)
+    print("V25_ROUTE_RESULT", p:GetAttribute("FinishTime"), p.leaderstats.Deaths.Value)
     waitFor(function()
         return state:GetAttribute("Phase") == "Waiting"
     end, 185, "NPC completion / room finish")
@@ -268,7 +276,7 @@ local function solo()
     for _, row in state.Results:GetChildren() do
         if row:GetAttribute("BotName") then
             print(
-                "V24_NPC_RESULT",
+                "V25_NPC_RESULT",
                 row:GetAttribute("PlayerName"),
                 row:GetAttribute("State"),
                 row:GetAttribute("Time")
@@ -280,7 +288,7 @@ local function solo()
     end
     check(finished == 3, "all three NPC difficulties finish")
     report:SetAttribute("SoloPassed", true)
-    print("V24_SOLO_SUITE_PASS")
+    print("V25_SOLO_SUITE_PASS")
 end
 local function multi()
     waitFor(function()
@@ -330,6 +338,20 @@ local function multi()
     ar.CFrame = CFrame.lookAt(Vector3.new(0, 3, 40), Vector3.new(0, 3, 60))
     br.CFrame = CFrame.new(0, 3, 43.5)
     br.AssemblyLinearVelocity = Vector3.zero
+    br.Anchored=true
+    resetBag(b)
+    runtime.Inventory.Add(b,"Shield")
+    runtime.Items.Use(b)
+    task.wait(0.25)
+    control:FireClient(host,"ObserveShield",b.UserId)
+    waitFor(function() return host:GetAttribute("QAVisualPassed") end,8,"multiplayer effect replication")
+    resetBag(host)
+    runtime.Inventory.Add(host,"Rocket")
+    runtime.Items.Use(host)
+    task.wait(1.5)
+    check(b:GetAttribute("ShieldUntil")==0 and (b:GetAttribute("SlowUntil") or 0)<workspace:GetServerTimeNow(),"player shield intercepts player missile")
+    br.Anchored=false
+    br:SetNetworkOwnershipAuto()
     task.wait(0.3)
     control:FireClient(host, "Punch")
     task.wait(0.45)
@@ -382,7 +404,7 @@ local function multi()
         local _, h, r = rig(b)
         return b.Character ~= oldCharacter and h and h.Health > 0 and r and math.abs(r.Position.Z - 50) < 8
     end, 10, "impact fall recovery")
-    print("V24_RECOVERY_POSITION", b.Character.HumanoidRootPart.Position, b:GetAttribute("LastDeathReason"))
+    print("V25_RECOVERY_POSITION", b.Character.HumanoidRootPart.Position, b:GetAttribute("LastDeathReason"))
     check(math.abs(b.Character.HumanoidRootPart.Position.Z - 50) < 8, "impact fall recovery")
     control:FireClient(host, "End")
     task.wait(0.5)
@@ -397,7 +419,7 @@ local function multi()
     task.wait(0.5)
     check(state:GetAttribute("Phase") == "Waiting", "host ends room")
     report:SetAttribute("MultiPassed", true)
-    print("V24_MULTI_SUITE_PASS")
+    print("V25_MULTI_SUITE_PASS")
 end
 local ok, err = xpcall(function()
     if workspace:GetAttribute("QAMode") == "Multi" then
@@ -408,5 +430,5 @@ local ok, err = xpcall(function()
 end, debug.traceback)
 if not ok then
     report:SetAttribute("Failed", true)
-    warn("V24_SERVER_FAIL", err)
+    warn("V25_SERVER_FAIL", err)
 end
