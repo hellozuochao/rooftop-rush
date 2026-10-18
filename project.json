@@ -1,0 +1,166 @@
+{
+  "entries": [
+    {
+      "name": "Game",
+      "file": "src/Game.server.luau",
+      "class": "Script",
+      "parent": "ServerScriptService"
+    },
+    {
+      "name": "Race",
+      "file": "src/Race.server.luau",
+      "class": "Script",
+      "parent": "ServerScriptService"
+    },
+    {
+      "name": "Systems",
+      "file": "src/Systems.server.luau",
+      "class": "Script",
+      "parent": "ServerScriptService"
+    },
+    {
+      "name": "Hud",
+      "file": "src/Hud.client.luau",
+      "class": "LocalScript",
+      "parent": "StarterPlayer/StarterPlayerScripts"
+    },
+    {
+      "name": "RaceUI",
+      "file": "src/Race.client.luau",
+      "class": "LocalScript",
+      "parent": "StarterPlayer/StarterPlayerScripts"
+    },
+    {
+      "name": "SystemsUI",
+      "file": "src/Systems.client.luau",
+      "class": "LocalScript",
+      "parent": "StarterPlayer/StarterPlayerScripts"
+    },
+    {
+      "name": "RunnerConfig",
+      "file": "src/Config.luau",
+      "class": "ModuleScript",
+      "parent": "ReplicatedStorage"
+    },
+    {
+      "name": "CollisionService",
+      "file": "src/server/CollisionService.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "CombatService",
+      "file": "src/server/CombatService.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "CourseProgress",
+      "file": "src/server/CourseProgress.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "CourseRewards",
+      "file": "src/server/CourseRewards.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "InventoryService",
+      "file": "src/server/InventoryService.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "ItemService",
+      "file": "src/server/ItemService.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "NpcService",
+      "file": "src/server/NpcService.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "RaceRoom",
+      "file": "src/server/RaceRoom.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "WardrobeService",
+      "file": "src/server/WardrobeService.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "CameraController",
+      "file": "src/client/CameraController.luau",
+      "class": "ModuleScript",
+      "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    },
+    {
+      "name": "NpcAnimator",
+      "file": "src/client/NpcAnimator.luau",
+      "class": "ModuleScript",
+      "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    },
+    {
+      "name": "MovementMath",
+      "file": "src/shared/MovementMath.luau",
+      "class": "ModuleScript",
+      "parent": "ReplicatedStorage/SharedModules"
+    },
+    {
+      "name": "InventoryUI",
+      "file": "src/client/InventoryUI.luau",
+      "class": "ModuleScript",
+      "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    },
+    {
+      "name": "WardrobeUI",
+      "file": "src/client/WardrobeUI.luau",
+      "class": "ModuleScript",
+      "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    },
+    {
+      "name": "Rules",
+      "file": "src/shared/Rules.luau",
+      "class": "ModuleScript",
+      "parent": "ReplicatedStorage/SharedModules"
+    },
+    {
+      "name": "GameplaySystems",
+      "file": "src/server/GameplaySystems.luau",
+      "class": "ModuleScript",
+      "parent": "ServerScriptService/ServerModules"
+    },
+    {
+      "name": "Modal",
+      "file": "src/client/Modal.luau",
+      "class": "ModuleScript",
+      "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    },
+    {
+      "name": "SettingsUI",
+      "file": "src/client/SettingsUI.luau",
+      "class": "ModuleScript",
+      "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    },
+    {
+      "name": "AudioController",
+      "file": "src/client/AudioController.luau",
+      "class": "ModuleScript",
+      "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    },
+    {
+      "name": "ItemVisuals",
+      "file": "src/client/ItemVisuals.luau",
+      "class": "ModuleScript",
+      "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    }
+  ]
+}
