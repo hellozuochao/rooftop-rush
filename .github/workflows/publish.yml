@@ -1,0 +1,109 @@
+name: Publish game version
+run-name: Publish ${{ inputs.version }}
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact VERSION in main, e.g. v25'
+        required: true
+        type: string
+      source_commit:
+        description: 'Optional: full main-history commit SHA for recovery; blank uses current main'
+        required: false
+        type: string
+        default: ''
+      studio_verified:
+        description: 'I tested this commit in Studio and reviewed the release notes'
+        required: true
+        type: boolean
+        default: false
+      recovery_version:
+        description: 'Recovery only: verified Roblox platform version after an ambiguous upload; otherwise 0'
+        required: true
+        type: string
+        default: '0'
+permissions:
+  contents: read
+concurrency:
+  group: official-game-publish
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main' && inputs.studio_verified
+    runs-on: ubuntu-latest
+    outputs:
+      commit: ${{ steps.source.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin the source commit from main history
+        id: source
+        env:
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess
+          sha = os.environ['SOURCE_COMMIT'] or os.environ['GITHUB_SHA']
+          assert re.fullmatch(r'[0-9a-f]{40}', sha), 'Expected full commit SHA'
+          subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'origin/main'], check=True)
+          subprocess.run(['git', 'checkout', '--detach', sha], check=True)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('commit=' + sha + '\n')
+          PY
+      - name: Validate requested version and release notes
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          v = os.environ['RELEASE_VERSION']
+          assert re.fullmatch(r'v[1-9][0-9]*', v), 'Invalid version'
+          assert pathlib.Path('VERSION').read_text().strip() == v, 'Version mismatch'
+          assert pathlib.Path('releases', v + '.md').is_file(), 'Missing release notes'
+          PY
+      - uses: actions/checkout@v4
+        with:
+          repository: luau-lang/luau
+          ref: '0.743'
+          path: .toolchain/luau
+      - name: Build pinned Luau
+        run: |
+          cmake -S .toolchain/luau -B .toolchain/build -DCMAKE_BUILD_TYPE=Release -DLUAU_BUILD_TESTS=OFF
+          cmake --build .toolchain/build --target Luau.Repl.CLI Luau.Compile.CLI -j2
+      - name: Test release recovery and verify game
+        env:
+          BUILD_COMMIT: ${{ steps.source.outputs.commit }}
+        run: |
+          python3 -m unittest discover -s tests -p 'test_release.py'
+          python3 tools/verify.py --luau-bin .toolchain/build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-release-build
+          path: |
+            SkylineSample.rbxlx
+            SkylineSample.rbxmx
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: roblox-production
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.commit }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-release-build
+      - name: Publish Roblox and finalize GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ needs.build.outputs.commit }}
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          ROBLOX_UNIVERSE_ID: ${{ vars.ROBLOX_UNIVERSE_ID }}
+          ROBLOX_PLACE_ID: ${{ vars.ROBLOX_PLACE_ID }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          RECOVERY_VERSION: ${{ inputs.recovery_version }}
+        run: python3 tools/release.py --version "$RELEASE_VERSION" --recovery-version "$RECOVERY_VERSION"

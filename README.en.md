@@ -20,7 +20,7 @@ Use the official [Luau 0.743 tools](https://github.com/luau-lang/luau/releases/t
 python3 tools/verify.py --luau-bin /absolute/path/to/luau-bin
 ```
 
-This builds the place, checks the map and script manifest, compiles sources and runs pure-logic tests. Studio integration, live multiplayer, touch controls and device performance require separate testing. GitHub Actions runs offline checks and saves Studio build artifacts. Releases are reviewed separately; CI does not publish to Roblox.
+This builds the place, checks the map and script manifest, compiles sources and runs pure-logic tests. Studio integration, live multiplayer, touch controls and device performance require separate testing. GitHub Actions runs offline checks and saves Studio build artifacts. Ordinary CI does not publish to Roblox. The separate manually dispatched `Publish game version` workflow verifies a build, publishes it to Roblox, records the platform version and artifact hashes, then finalizes its GitHub release. It requires the production environment described in [RELEASING.md](RELEASING.md).
 
 ## Source layout and versions
 
@@ -29,7 +29,7 @@ This builds the place, checks the map and script manifest, compiles sources and 
 - `tools/`: place and QA builders.
 - `tests/`: logic, build and Studio integration checks.
 
-Edit sources rather than generated Studio files. `main` is the maintained branch; `v23` and `v24` preserve historical game versions. See [changelog](CHANGELOG.md), [contribution guide](CONTRIBUTING.md) and [release procedure](RELEASING.md). There is no fixed release schedule.
+Edit sources rather than generated Studio files. `main` is the maintained branch; `v23` and `v24` preserve historical game versions. See [changelog](CHANGELOG.md), [contribution guide](CONTRIBUTING.md) and [release procedure](RELEASING.md). `VERSION` is the candidate game version; only a public release with a Roblox receipt represents a completed deployment. There is no fixed release schedule.
 
 ## License
 

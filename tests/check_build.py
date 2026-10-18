@@ -79,3 +79,13 @@ for d in children('Decor'):
     if (name(d) or '').startswith('Slide'):
         assert d.findtext('./Properties/bool[@name="CanCollide"]')=='false','guide blocks passage'
 print('PASS: every slide opening has an aligned nonblocking clearance guide.')
+
+info=folder('BuildInfo')
+assert instance_path(info)=='ReplicatedStorage/BuildInfo'
+values={name(i):i.findtext('./Properties/string[@name="Value"]') for i in info.findall('Item')}
+assert values['Version']==(root/'VERSION').read_text().strip()
+assert values['Commit']=='untracked' or (len(values['Commit'])==40 and all(c in '0123456789abcdef' for c in values['Commit']))
+bundle=E.parse(root/'SkylineSample.rbxmx')
+bundle_info=next(i for i in bundle.iter('Item') if name(i)=='BuildInfo')
+assert {name(i):i.findtext('./Properties/string[@name="Value"]') for i in bundle_info.findall('Item')}==values
+print('PASS: complete place and import bundle contain matching version and commit metadata.')

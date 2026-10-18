@@ -2,6 +2,9 @@
 from pathlib import Path
 import xml.etree.ElementTree as E
 import json
+import os
+import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 doc = E.Element('roblox', {'version': '4'})
@@ -205,6 +208,18 @@ def container(path):
     else:obj=item('StarterPlayerScripts' if parts[-1]=='StarterPlayerScripts' else 'Folder',parts[-1],container('/'.join(parts[:-1])))
     containers[path]=obj
     return obj
+version = (ROOT / 'VERSION').read_text().strip()
+if not re.fullmatch(r'v[1-9][0-9]*', version):
+    raise ValueError('VERSION must be v followed by a positive integer')
+commit = os.environ.get('BUILD_COMMIT')
+if not commit:
+    result = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True)
+    commit = result.stdout.strip() if result.returncode == 0 else 'untracked'
+if commit != 'untracked' and not re.fullmatch(r'[0-9a-f]{40}', commit):
+    raise ValueError('BUILD_COMMIT must be a full Git commit SHA')
+build_info = item('Folder', 'BuildInfo', container('ReplicatedStorage'))
+for key, value in (('Version', version), ('Commit', commit)):
+    prop(item('StringValue', key, build_info), 'string', 'Value', value)
 source_nodes=[]
 for entry in manifest:
     node=item(entry['class'],entry['name'],container(entry['parent']))
@@ -221,6 +236,7 @@ E.SubElement(bundle_doc,'External').text='null';E.SubElement(bundle_doc,'Externa
 bundle=E.SubElement(bundle_doc,'Item',{'class':'Model','referent':'RaceUpgradeBundle'})
 bp=E.SubElement(bundle,'Properties');E.SubElement(bp,'string',name='Name').text='NeonRaceTransfer'
 bundle.append(deepcopy(map_obj))
+bundle.append(deepcopy(build_info))
 for path,obj in containers.items():
     if path in ('ServerScriptService/ServerModules','StarterPlayer/StarterPlayerScripts/ClientModules','ReplicatedStorage/SharedModules'):bundle.append(deepcopy(obj))
 for node,entry in zip(source_nodes,manifest):

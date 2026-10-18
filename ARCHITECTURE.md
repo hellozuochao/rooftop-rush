@@ -76,4 +76,4 @@ SettingsEntryHUD 使用 DeviceSafeInsets，将设置入口放在顶部安全区�
 
 地图生成器 slide_guide 为每一个 Slide 对齐真实 y=2 下沿和地面引导；新增标记全部不参与碰撞。地图检查验证标记数量、位置和碰撞属性，防止美术改动改变通行尺寸。
 
-GitHub workflow 对 main/PR/版本标签运行固定 Luau 0.743 的离线验证；版本标签通过后创建草稿 Release，Studio 发布仍人工检查目标 Place 和 QA 清理。
+GitHub 验证 workflow 对 main/PR/版本标签运行固定 Luau 0.743 的离线验证。独立 Publish game version workflow 在维护者确认 Studio 测试后发布同一构建到 Roblox，再公开 GitHub Release。VERSION、BuildInfo 与 release-state.json 分别保存候选版本、运行构建身份和双平台发布回执。详见 RELEASING.md。

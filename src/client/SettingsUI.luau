@@ -74,6 +74,21 @@ return function(deps)
         gui:GetAttributeChangedSignal(entry[1]):Connect(refresh)
         refresh()
     end
+    local info = game:GetService("ReplicatedStorage"):WaitForChild("BuildInfo")
+    local version = info:WaitForChild("Version")
+    local platformVersion = info:WaitForChild("RobloxVersion")
+    local versionLabel = label("", rows)
+    versionLabel.Name = "GameVersion"
+    versionLabel.LayoutOrder = 100
+    versionLabel.Size = UDim2.new(1, -6, 0, 32)
+    versionLabel.TextSize = 14
+    local function refreshVersion()
+        local suffix = platformVersion.Value == "0" and "本地测试" or "Roblox " .. platformVersion.Value
+        versionLabel.Text = "屋顶狂飙 " .. version.Value .. " · " .. suffix
+    end
+    version.Changed:Connect(refreshVersion)
+    platformVersion.Changed:Connect(refreshVersion)
+    refreshVersion()
     local help = button("Help", "游戏说明 · 展开", rows)
     help.LayoutOrder = -2
     help.Size = UDim2.new(1, -6, 0, 44)
