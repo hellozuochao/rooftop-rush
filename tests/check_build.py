@@ -89,3 +89,15 @@ bundle=E.parse(root/'SkylineSample.rbxmx')
 bundle_info=next(i for i in bundle.iter('Item') if name(i)=='BuildInfo')
 assert {name(i):i.findtext('./Properties/string[@name="Value"]') for i in bundle_info.findall('Item')}==values
 print('PASS: complete place and import bundle contain matching version and commit metadata.')
+
+item_keys={'Boost','Shield','Rocket','Spring','EMP','Cleanse','Magnet','Trap','Decoy','Vacuum','Leader','Smoke','Steal','Shockwave'}
+seen=set()
+for supply in children('Pickups'):
+    key=next(i for i in supply.findall('Item') if name(i)=='ItemKey')
+    value=key.findtext('./Properties/string[@name="Value"]')
+    assert value in item_keys, 'pickup has unknown item identity'
+    seen.add(value)
+assert seen==item_keys, 'course must showcase all fourteen item identities'
+assert not any(name(i) in ('SlideHint','SlideLabel') for i in doc.iter('Item')), 'slide text hint returned'
+assert len([d for d in children('Decor') if name(d)=='SlidePictogramHead'])==len(slides)
+print('PASS: all 14 item identities represented; slide guidance uses geometry without text.')

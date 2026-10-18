@@ -1,3 +1,4 @@
+local Art = require(game.ReplicatedStorage:WaitForChild("SharedModules"):WaitForChild("ItemArt"))
 -- Dependencies are supplied by Systems.server; requiring this module has no side effects.
 return function(deps)
     local actors = deps.actors
@@ -19,6 +20,26 @@ return function(deps)
     local same = deps.same
     local S = deps.S
     local traps = {}
+    local function pulse(position, color, radius)
+        for i=1,24 do
+            local angle=i*math.pi/12
+            local direction=Vector3.new(math.cos(angle),0,math.sin(angle))
+            local segment=Instance.new("Part",workspace)
+            segment.Name="ItemPulseRing"
+            segment.Anchored=true
+            segment.CanCollide=false
+            segment.CanTouch=false
+            segment.CanQuery=false
+            segment.Material=Enum.Material.Neon
+            segment.Color=color
+            segment.Size=Vector3.new(0.3,0.2,0.45)
+            segment.CFrame=CFrame.lookAt(position+direction,position+direction+Vector3.new(-direction.Z,0,direction.X))
+            game:GetService("TweenService"):Create(segment,TweenInfo.new(0.6),{
+                Position=position+direction*radius,Size=Vector3.new(0.3,0.2,radius*0.28),Transparency=1
+            }):Play()
+            Debris:AddItem(segment,0.65)
+        end
+    end
     local function use(a)
         local st = actors[a]
         local _, _, r = rig(a)
@@ -51,12 +72,14 @@ return function(deps)
         end
         removeItem(a)
         notice(a, "已使用：" .. C.Items[item])
+        a:SetAttribute("LastUsedItem", item)
         a:SetAttribute("UsedItemSerial", (a:GetAttribute("UsedItemSerial") or 0) + 1)
         if item == "Boost" or item == "Magnet" then
             local duration = 4
             if item == "Magnet" and target then
                 duration = math.clamp((model(target).HumanoidRootPart.Position.Z - r.Position.Z) / 35, 3, 7)
             end
+            a:SetAttribute("SprintItem", item)
             a:SetAttribute("SprintUntil", now() + duration)
             notice(a, "涡轮启动 · 最高40")
         elseif item == "Shield" then
@@ -65,7 +88,7 @@ return function(deps)
         elseif item == "Cleanse" then
             a:SetAttribute("SlowUntil", 0)
             a:SetAttribute("ImmuneUntil", now() + 3)
-            effect(r.Position, Color3.fromRGB(100, 255, 180), 5)
+            pulse(r.Position - Vector3.new(0,2,0), Art.Colors.Cleanse, 5)
         elseif item == "Decoy" then
             a:SetAttribute("DecoyUntil", now() + 8)
             notice(a, "全息诱饵已部署")
@@ -83,6 +106,10 @@ return function(deps)
             pad.CanCollide = false
             pad.Material = Enum.Material.Neon
             pad.Color = Color3.fromRGB(110, 255, 150)
+            pad.CanQuery=false
+            local art=Art.Create("Spring",pad)
+            art:ScaleTo(1.6)
+            art:PivotTo(CFrame.new(pad.Position+Vector3.new(0,1.2,0)))
             table.insert(traps, { Part = pad, Owner = a, Expires = now() + 10, Hit = {}, Spring = true })
         elseif item == "Smoke" then
             local cloud = Instance.new("Part", workspace)
@@ -94,10 +121,27 @@ return function(deps)
             cloud.CanCollide = false
             cloud.CanTouch = false
             cloud.Color = Color3.fromRGB(100, 80, 135)
-            cloud.Transparency = 0.4
+            cloud.Transparency = 0.55
+            cloud.CanQuery=false
+            for i=1,5 do
+                local puff=Instance.new("Part",cloud)
+                puff.Name="SmokePuff"
+                puff.Shape=Enum.PartType.Ball
+                puff.Size=Vector3.new(5,5,5)
+                puff.CFrame=CFrame.new(cloud.Position+Vector3.new(math.cos(i)*3,math.sin(i*2),math.sin(i)*3))
+                puff.Anchored=true
+                puff.CanCollide=false
+                puff.CanTouch=false
+                puff.CanQuery=false
+                puff.Color=Art.Colors.Smoke
+                puff.Transparency=0.5
+                game:GetService("TweenService"):Create(puff,TweenInfo.new(4),{
+                    Position=puff.Position+Vector3.new(0,2,0),Size=Vector3.one*7,Transparency=1
+                }):Play()
+            end
             Debris:AddItem(cloud, 4)
         elseif item == "Shockwave" then
-            effect(r.Position, Color3.fromRGB(80, 220, 255), 12)
+            pulse(r.Position - Vector3.new(0,2,0), Art.Colors.Shockwave, 10)
             for _, b in list do
                 local _, _, br = rig(b)
                 if (br.Position - r.Position).Magnitude < 10 and strike(b, 0.35) then
@@ -120,9 +164,13 @@ return function(deps)
             v.Color = Color3.fromRGB(255, 80, 180)
             v.Material = Enum.Material.Neon
             v.Transparency = 0.25
+            v.CanQuery=false
+            local art=Art.Create("Trap",v)
+            art:ScaleTo(2.4)
+            art:PivotTo(CFrame.new(v.Position+Vector3.new(0,0.7,0)))
             table.insert(traps, { Part = v, Owner = a, Expires = now() + 9, Hit = {} })
         elseif item == "EMP" then
-            effect(r.Position, Color3.fromRGB(170, 80, 255), 15)
+            pulse(r.Position - Vector3.new(0,1,0), Art.Colors.EMP, 18)
             for _, b in list do
                 if (model(b).HumanoidRootPart.Position - r.Position).Magnitude < 18 then
                     strike(b, 1.2)
@@ -137,6 +185,7 @@ return function(deps)
                 item == "Steal" and "道具将被夺取！可立即使用或开盾"
                     or "追踪警报！立即使用护盾"
             )
+            marked:SetAttribute("IncomingItem", item)
             marked:SetAttribute("IncomingUntil", now() + delay)
             local orb = Instance.new("Part", workspace)
             orb.Name = "TrackingItem"
@@ -147,7 +196,12 @@ return function(deps)
             orb.CanCollide = false
             orb.CanTouch = false
             orb.Material = Enum.Material.Neon
-            orb.Color = Color3.fromRGB(255, 125, 65)
+            orb.Color = Art.Colors[item]
+            orb.CanQuery=false
+            orb.Transparency=1
+            local projectileArt=Art.Create(item,orb)
+            projectileArt:ScaleTo(0.7)
+            projectileArt:PivotTo(CFrame.new(r.Position))
             local a0 = Instance.new("Attachment", orb)
             a0.Position = Vector3.new(-0.3, 0, 0)
             local a1 = Instance.new("Attachment", orb)
@@ -172,6 +226,9 @@ return function(deps)
                 elapsed += dt
                 if tr then
                     orb.Position = orb.Position:Lerp(tr.Position, math.min(1, dt * 7))
+                    local delta=tr.Position-orb.Position
+                    local direction=delta.Magnitude>0.01 and delta.Unit or Vector3.zAxis
+                    projectileArt:PivotTo(CFrame.lookAt(orb.Position,orb.Position+direction)*CFrame.Angles(-math.pi/2,0,0))
                 end
                 if elapsed >= delay or not tr then
                     conn:Disconnect()

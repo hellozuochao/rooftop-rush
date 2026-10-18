@@ -93,21 +93,22 @@ def slide_guide(x, z, width, depth):
         part('SlideFloorRail',(x+side*(width/2-.3),.05,z-2),(0.12,.1,depth+7),cyan,decor,neon=True,collide=False)
     for dz in (-6,-4,-2):
         part('SlideApproach',(x,.06,z+dz),(min(width-1,5),.12,.18),cyan,decor,neon=True,collide=False)
-    anchor=part('SlideHint',(x,8.2,z-depth/2-.2),(.1,.1,.1),parent=decor,collide=False)
-    prop(anchor,'float','Transparency',1)
-    gui=item('BillboardGui','SlideLabel',anchor)
-    prop(gui,'float','MaxDistance',75)
-    prop(gui,'bool','AlwaysOnTop',False)
-    size=prop(gui,'UDim2','Size','')
-    for key,val in [('XS',0),('XO',140),('YS',0),('YO',32)]: E.SubElement(size,key).text=str(val)
-    label=item('TextLabel','Text',gui)
-    size=prop(label,'UDim2','Size','')
-    for key,val in [('XS',1),('XO',0),('YS',1),('YO',0)]: E.SubElement(size,key).text=str(val)
-    prop(label,'float','BackgroundTransparency',.25)
-    color(label,'BackgroundColor3',(10,30,40))
-    color(label,'TextColor3',(170,245,255))
-    prop(label,'bool','TextScaled',True)
-    prop(label,'string','Text','↓ 滑铲穿过')
+    # Low, deep lintel with high-contrast hazard stripes: the opening is visibly below standing height.
+    for side in (-1,1):
+        part('SlideFrame',(x+side*(width/2+.22),1.65,z),(.35,3.3,depth+.35),(27,40,52),decor,collide=False)
+    for dx in range(-int(width/2)+1,int(width/2),2):
+        stripe=part('SlideHazardStripe',(x+dx,2.38,z-depth/2-.13),(.55,.55,.12),(245,185,60),decor,collide=False)
+        cf=stripe.find('./Properties/CoordinateFrame[@name="CFrame"]')
+        import math
+        for key,val in {'R00':math.cos(.55),'R01':-math.sin(.55),'R10':math.sin(.55),'R11':math.cos(.55)}.items():cf.find(key).text=str(val)
+    # A geometric sliding-person pictogram, no text or floating instruction billboard.
+    part('SlidePictogramPlate',(x,3.8,z-depth/2-.2),(3,1.7,.16),(18,30,42),decor,collide=False)
+    head=part('SlidePictogramHead',(x-.8,4.1,z-depth/2-.32),(.4,.4,.14),cyan,decor,neon=True,collide=False)
+    prop(head,'token','shape',0)
+    part('SlidePictogramBody',(x-.3,3.72,z-depth/2-.32),(.9,.25,.14),cyan,decor,neon=True,collide=False)
+    part('SlidePictogramLegs',(x+.65,3.48,z-depth/2-.32),(1.25,.22,.14),cyan,decor,neon=True,collide=False)
+    for dx in (-.95,-.45,.05):
+        part('SlidePictogramMotion',(x+dx,3.3,z-depth/2-.32),(.3,.08,.14),cyan,decor,neon=True,collide=False)
 
 gaps=item('Folder','Gaps',map_obj)
 coins=item('Folder','Collectibles',map_obj)
@@ -177,10 +178,17 @@ for stage in (9,10,11):
 # Collectibles deliberately reward exploring the upper route.
 for i,(z,y) in enumerate(((160,3),(365,13),(1240,13)),1):
     part('Token'+str(i),(0,y,z),(1.6,1.6,1.6),(245,205,99),coins,neon=True,collide=False)
+# A visible, deterministic item identity: the model always matches the granted item.
+item_keys=['Boost','Shield','Rocket','Spring','EMP','Cleanse','Magnet','Trap','Decoy','Vacuum','Leader','Smoke','Steal','Shockwave']
+item_categories={key:'机动补给' for key in ('Boost','Magnet','Spring','Vacuum')}
+item_categories.update({key:'防御补给' for key in ('Shield','Cleanse','Decoy')})
 for i,z in enumerate(range(25,1720,55),1):
-    category,label,tint=((0,'机动补给',(80,220,180)),(1,'防御补给',(80,170,255)),(2,'攻击补给',(255,155,75)))[i%3]
+    key=item_keys[(i-1)%len(item_keys)]
+    category=item_categories.get(key,'攻击补给')
+    tint={'机动补给':(80,220,180),'防御补给':(80,170,255),'攻击补给':(255,155,75)}[category]
     supply=part('Supply'+str(i),(((i%3)-1)*8,2,z),(1.8,1.8,1.8),tint,pickups,neon=True,collide=False)
-    prop(item('StringValue','Category',supply),'string','Value',label)
+    prop(item('StringValue','Category',supply),'string','Value',category)
+    prop(item('StringValue','ItemKey',supply),'string','Value',key)
 for i,(node,lo,hi) in enumerate(((308,316,398),(1172,1180,1262)),1):
     part('WallJump'+str(i),(0,3,node),(11,6,0.25),(80,184,200),routes,collide=False)
     part('UpperRoof',(0,9.5,(lo+hi)/2),(12,1,hi-lo),(27,42,55),platforms)

@@ -100,7 +100,7 @@ ready.Size = UDim2.new(0.5, -18, 0, 34)
 local start = button("Start", "房主开始", panel)
 start.Position = UDim2.new(0.5, 6, 1, -90)
 start.Size = UDim2.new(0.5, -18, 0, 34)
-local watch = button("Spectate", "观战：全局", panel)
+local watch = button("Spectate", "观战：领跑者", panel)
 watch.Position = UDim2.new(0, 12, 1, -48)
 watch.Size = UDim2.new(0.5, -18, 0, 34)
 local leave = button("Leave", "退出本场", panel)
@@ -173,7 +173,7 @@ watch.Activated:Connect(function()
             child:Destroy()
         end
     end
-    local names = { { "All", "全局上帝视角" } }
+    local names = { { "All", "领跑者第一视角" } }
     for _, q in P:GetPlayers() do
         if q:GetAttribute("Running") and q.Character then
             table.insert(names, { q.Character.Name, q.DisplayName })
@@ -233,7 +233,7 @@ while gui.Parent do
     watch.Visible = not running and phase == "Racing"
     watch.Text = "观战："
         .. (
-            gui:GetAttribute("SpectateName") == "All" and "全局（点此切换）"
+            gui:GetAttribute("SpectateName") == "All" and "领跑者（点此切换）"
             or gui:GetAttribute("SpectateName")
         )
     hint.Text = phase == "Waiting"

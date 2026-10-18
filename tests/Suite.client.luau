@@ -142,11 +142,12 @@ local function uiAndRoute()
         if not r then
             return Vector3.zero
         end
-        return Vector3.new(
-            os.clock() < reverseUntil and -1 or 1,
-            0,
-            -math.clamp((-11 - r.Position.X) / 4, -1, 1)
-        )
+        local look = workspace.CurrentCamera.CFrame.LookVector
+        local forward = Vector3.new(look.X, 0, look.Z).Unit
+        local right = forward:Cross(Vector3.yAxis)
+        local wanted = Vector3.new(math.clamp((-11-r.Position.X)/4,-1,1), 0,
+            os.clock() < reverseUntil and -1 or 1)
+        return Vector3.new(wanted:Dot(right), 0, -wanted:Dot(forward))
     end
     while not p:GetAttribute("Finished") do
         local dt = Run.Heartbeat:Wait()

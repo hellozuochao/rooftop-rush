@@ -461,7 +461,7 @@ Run:BindToRenderStep("SkylineRunner", Enum.RenderPriority.Camera.Value + 1, func
         h.AutoRotate = false
         if h.Health > 0 and not p:GetAttribute("Hanging") then
             local input = controls:GetMoveVector()
-            local wanted = Vector3.new(-input.Z, 0, input.X)
+            local wanted, viewForward = Camera.Direction(input)
             if wanted.Magnitude < 0.15 or UIS:GetFocusedTextBox() then
                 wanted = Vector3.zero
             elseif wanted.Magnitude > 1 then
@@ -485,7 +485,10 @@ Run:BindToRenderStep("SkylineRunner", Enum.RenderPriority.Camera.Value + 1, func
             if not running then
                 top = 14
             end
-            local target = Vector3.new(wanted.X * (running and C.LateralSpeed or 14), 0, wanted.Z * top)
+            local viewRight = viewForward:Cross(Vector3.yAxis)
+            local target = slidingNow and wanted * top
+                or viewForward * wanted:Dot(viewForward) * top
+                    + viewRight * wanted:Dot(viewRight) * (running and C.LateralSpeed or 14)
             local mx, mz =
                 Motion.Step(momentum.X, momentum.Z, target.X, target.Z, dt, C.Acceleration, C.Braking)
             momentum = Vector3.new(mx, 0, mz)
@@ -526,8 +529,8 @@ Run:BindToRenderStep("SkylineRunner", Enum.RenderPriority.Camera.Value + 1, func
             end
             gui:SetAttribute("MoveAxis", wanted.Z)
             gui:SetAttribute("Speed", math.abs(motion.Z))
-            if momentum.Magnitude > 1 then
-                local rot = CFrame.lookAt(Vector3.zero, momentum.Unit)
+            if canMove then
+                local rot = CFrame.lookAt(Vector3.zero, slidingNow and slideDirection or viewForward)
                 root.CFrame = CFrame.new(root.Position)
                     * root.CFrame.Rotation:Lerp(rot, 1 - math.exp(-dt * 12))
             end

@@ -161,6 +161,12 @@
       "file": "src/client/ItemVisuals.luau",
       "class": "ModuleScript",
       "parent": "StarterPlayer/StarterPlayerScripts/ClientModules"
+    },
+    {
+      "name": "ItemArt",
+      "file": "src/shared/ItemArt.luau",
+      "class": "ModuleScript",
+      "parent": "ReplicatedStorage/SharedModules"
     }
   ]
 }

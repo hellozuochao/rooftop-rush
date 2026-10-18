@@ -6,7 +6,7 @@ Roblox 屋顶跑酷竞速：12 段赛道、单人 NPC 对手、多人房间、�
 
 ## 工程入口
 
-- `src/`：27 个正式 Luau 脚本/模块。
+- `src/`：28 个正式 Luau 脚本/模块。
 - `project.json`：唯一安装清单，声明每个脚本的名称、类型和 Roblox 路径。
 - `tools/build_place.py`：生成地图与可编辑 Studio 文件。
 - `tests/`：纯逻辑、地图/安装清单检查和 Studio 集成测试。

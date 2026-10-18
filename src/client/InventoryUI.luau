@@ -1,3 +1,4 @@
+local Art = require(game.ReplicatedStorage:WaitForChild("SharedModules"):WaitForChild("ItemArt"))
 return function(deps)
     local p, gui, remote, C, button, label = deps.p, deps.gui, deps.remote, deps.C, deps.button, deps.label
     local CAS = game:GetService("ContextActionService")
@@ -12,9 +13,21 @@ return function(deps)
     bagPanel.AnchorPoint = Vector2.new(1, 0)
     bagPanel.Position = UDim2.new(1, -12, 0, 50)
     local slots = {}
+    local captions = {}
+    local iconKeys = {}
     for i = 1, C.Rules.InventoryCapacity do
         local b = button("Slot" .. i, "空", bagPanel)
-        b.TextSize = 11
+        b.TextSize = 12
+        b.Text = ""
+        local caption = Instance.new("TextLabel", b)
+        caption.BackgroundTransparency = 1
+        caption.Position = UDim2.fromOffset(44, 0)
+        caption.Size = UDim2.new(1, -46, 1, 0)
+        caption.TextColor3 = b.TextColor3
+        caption.Font = b.Font
+        caption.TextSize = 12
+        caption.TextWrapped = true
+        captions[i] = caption
         b.BackgroundTransparency = 0.18
         b.Activated:Connect(function()
             remote:FireServer("UseSlot", i)
@@ -37,16 +50,6 @@ return function(deps)
             end
         end, false, key)
     end
-    local supplyLabels = {}
-    for _, supply in workspace.NeonObby.Pickups:GetChildren() do
-        local billboard = Instance.new("BillboardGui", supply)
-        billboard.Size = UDim2.fromOffset(90, 30)
-        billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-        billboard.MaxDistance = 45
-        local text = label("", billboard)
-        text.Size = UDim2.fromScale(1, 1)
-        supplyLabels[supply] = text
-    end
     local lastPickup = 0
 
     local function update(now, running, v, size, main)
@@ -61,9 +64,9 @@ return function(deps)
                 bottom = math.min(bottom, control.AbsolutePosition.Y - gui.AbsolutePosition.Y - 16)
             end
         end
-        local rowHeight = 48
+        local rowHeight = 54
         local height = math.min(count * rowHeight, math.max(0, bottom - top))
-        bagPanel.Size = UDim2.fromOffset(v.Y < 500 and 100 or 116, height)
+        bagPanel.Size = UDim2.fromOffset(v.Y < 500 and 144 or 160, height)
         bagPanel.CanvasSize = UDim2.fromOffset(0, count * rowHeight)
         bagPanel.CanvasPosition =
             Vector2.new(0, math.clamp(bagPanel.CanvasPosition.Y, 0, math.max(0, count * rowHeight - height)))
@@ -71,14 +74,6 @@ return function(deps)
             b.Visible = p:GetAttribute("Inv" .. i) ~= nil
             b.Position = UDim2.fromOffset(0, (i - 1) * rowHeight)
             b.Size = UDim2.new(1, -5, 0, rowHeight - 4)
-        end
-        for supply, text in supplyLabels do
-            local remaining = math.max(0, (p:GetAttribute("SupplyReady" .. supply.Name) or 0) - now)
-            supply.LocalTransparencyModifier = remaining > 0 and 0.85 or 0
-            local category = supply:FindFirstChild("Category")
-            text.Text = remaining > 0 and ("刷新 " .. math.ceil(remaining) .. "秒")
-                or (category and category.Value or "随机补给")
-            text.TextColor3 = remaining > 0 and Color3.fromRGB(160, 170, 180) or supply.Color
         end
         local picked = p:GetAttribute("PickupSerial") or 0
         if picked ~= lastPickup then
@@ -91,12 +86,18 @@ return function(deps)
         end
         for i, b in slots do
             local key = p:GetAttribute("Inv" .. i)
-            b.Text = i
+            if iconKeys[i] ~= key then
+                local old = b:FindFirstChild("ItemIcon")
+                if old then old:Destroy() end
+                if key and Art.Colors[key] then Art.Icon(key, b) end
+                iconKeys[i] = key
+            end
+            captions[i].Text = i
                 .. " · "
                 .. (key and C.Items[key] or "空")
                 .. (p:GetAttribute("SelectedSlot") == i and " ✓" or "")
             b.BackgroundColor3 = p:GetAttribute("SelectedSlot") == i and Color3.fromRGB(35, 120, 120)
-                or Color3.fromRGB(25, 46, 66)
+                or (key and Art.Colors[key] and Art.Colors[key]:Lerp(Color3.fromRGB(15,24,35),0.75) or Color3.fromRGB(25,46,66))
         end
     end
     return { Update = update }
