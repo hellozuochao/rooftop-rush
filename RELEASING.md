@@ -1,92 +1,87 @@
-# 版本与双平台发布
+# 本地测试、Studio 发布与 GitHub 版本同步
 
-## 版本的唯一来源
+当前采用本地 Roblox Studio 测试和发布，不使用 GitHub 云端发布 Roblox，
+也不需要 Roblox Open Cloud API key。GitHub 自动工作流仅构建和验证代码。
 
-根目录 `VERSION` 是唯一游戏版本号，下一候选版本为 `v25`；它不是已上线声明。
-构建器把版本和 Git 提交 SHA 写入 `ReplicatedStorage/BuildInfo`。服务端补充实际
-`game.PlaceVersion`，设置面板显示游戏版本与当前服务器的 Roblox 平台版本。
-Roblox 平台版本由 Roblox 分配，不要求数字等于 v25。已有 v23、v24 标签保持不变。
+## 统一版本
 
-每个新版本增加 `VERSION`，并编写 `releases/<版本>.md`。日常修改和 PR 运行验证；
-完成一批修改并通过 Studio 验证后，维护者触发一次正式发布。GitHub 与 Roblox
-不能原子地同时提交，因此只有带发布回执的公开 Release 才表示双平台流程完成。
+根目录 `VERSION` 是游戏版本号，目前 `v25` 是候选版本，尚未发布。
+构建将版本和完整 Git 提交 SHA 写入 `ReplicatedStorage/BuildInfo`；服务端补充
+实际 `game.PlaceVersion`，设置面板显示游戏版本与当前服务器的 Roblox 平台版本。
+平台版本由 Roblox 分配，通过发布记录与 GitHub 标签对应，不强求数字相同。
+v23、v24 历史标签保持不变，不追填未经核实的平台版本。
 
-## 一次性配置（维护者）
+## 每次修改与发布
 
-在 GitHub 仓库 Settings → Environments 创建 `roblox-production`，限制仅允许
-`main` 分支部署。需要审批时可配置 required reviewers；不要给社区 PR 发布凭证。
-
-在该 Environment 配置：
-
-| 类型 | 名称 | 内容 |
-| --- | --- | --- |
-| Secret | `ROBLOX_API_KEY` | Roblox Creator Dashboard 创建的发布 API key |
-| Variable | `ROBLOX_UNIVERSE_ID` | 本游戏的 Universe ID |
-| Variable | `ROBLOX_PLACE_ID` | 官方 Place ID：`116603842981489` |
-
-派生项目必须配置自己的体验与 Place，不能使用官方目标。
-API key 仅授予目标游戏所需的 `universe-places` Write 权限；按 Roblox 的界面配置
-有效期与网络访问条件。不要将密钥写进源码、提交、日志或聊天，也不要为了 CI
-开放无关游戏或存档权限。[官方发布接口与授权说明](https://create.roblox.com/docs/cloud/guides/usage-place-publishing)。
-密钥必须由账号持有者创建后直接粘贴到 GitHub Environment Secret。到期时在同一
-Secret 中替换。代码只从环境变量读取，不打印密钥或 Roblox 的错误响应体。
-
-## 每次正式发布
-
-1. 从 `main` 建功能分支，修改源码与构建器；新增模块登记 `project.json`。
-2. 设置新的 `VERSION` 并编写对应更新说明；已发布的标签、文件与回执不覆盖。
-3. 运行：
+1. 在本地分支修改源码、地图和界面；需要正式发布时更新 `VERSION` 与
+   `releases/<版本>.md`。已发布标签不移动、不覆盖。
+2. 执行离线检查：
    ```sh
-   python3 -m unittest discover -s tests -p 'test_release.py'
    python3 tools/verify.py --luau-bin /absolute/path/to/luau-bin
    ```
-4. 对最终提交在 Studio 测试。`tools/build_qa.py` 生成独立 QA 包，服务端测试移至
-   ServerScriptService，客户端测试移至 StarterPlayerScripts。Workspace.QAMode
-   设 Solo 验证单人，设 Multi 配合三个客户端验证多人。测试完移除 QA 实例与属性。
-   验证设置中的版本号、手机横竖屏与 iPad、玩法说明、道具、移动/攻击/碰撞、NPC、
-   准备与观战。真实触屏、网络和音频要单独验证，不能声称离线 CI 覆盖它们。
-5. 合并最终提交。打开 Actions → **Publish game version** → **Run workflow**，
-   选择 `main`，填写与该提交 `VERSION` 一致的版本号；确认该提交已通过 Studio
-   测试，正常发布的 `recovery_version` 保持 `0`，`source_commit` 留空。
-6. 流程重新验证、构建一次，再把同一份构建交给发布作业。它固定 Git 标签、创建
-   GitHub 草稿和构建附件，持久保存“准备上传”状态后才调用 Roblox Published 接口。
-7. Roblox 成功返回平台版本后，流程保存回执，再公开 GitHub Release。Release
-   包含 `.rbxlx`、`.rbxmx`、源码标签、更新说明和 `release-state.json`；回执记录
-   游戏版本、完整提交 SHA、目标 Universe/Place、两个文件 SHA-256 和 Roblox 版本。
-8. 进入新服务器检查显示的游戏版本与回执对应。旧服务器继续运行旧版本，流程不会
-   自动踢出玩家或重启服务器；紧急更新时另行决定服务器迁移/重启。
+   新生产模块须登记 `project.json`。修改生成的 Studio 文件不能替代修改源码。
+3. 在 Studio 本地试玩。需要集成测试时运行 `python3 tools/build_qa.py`，
+   将独立 QA 包的服务端脚本移至 ServerScriptService，客户端脚本移至
+   StarterPlayerScripts；Workspace.QAMode 设 Solo 验证单人，设 Multi 配合
+   三个客户端验证多人。正式构建不得包含 QA 脚本或 QAMode。
+   按改动验证移动、道具、碰撞、NPC、准备/观战、版本显示和手机/iPad 布局。
+   音频、真实触屏和设备性能需单独验证，如未测必须注明。
+4. 将最终源码、版本号和说明提交并推送 GitHub，等待自动检查通过。记录完整提交
+   SHA。以该提交的干净工作区重新构建；核对 BuildInfo.Version 和 BuildInfo.Commit，
+   对这个最终文件进行 Studio 发布前检查。测试发现问题则修复并重新提交、构建。
+5. 冻结这次构建文件并计算 SHA-256。使用已登录的本地 Studio 打开完整
+   `SkylineSample.rbxlx`，确认待发布内容和目标体验，通过 Studio 发布到已有官方
+   Place `116603842981489`（Universe `10771400448`）。生成文件本身不携带原体验
+   的发布身份，必须明确选择已有目标，不能误建新游戏或覆盖别的 Place。
+   若 Studio 内又修改了内容，先把修改回写源码、重新提交和验证，不能发布与标签不符的文件。
+6. 确认 Studio 报告发布成功，并从 Roblox 版本历史和新服务器核实实际平台版本。
+   在新服务器核对游戏版本、PlaceId、BuildInfo.Commit 与该次提交一致。
+   旧服务器可能仍运行旧版本；重启或迁移玩家另行决定。
+7. 用核实的结果填写 `release-state.json`（模板见下），记录测试范围与未测项。
+   在已验证的源码提交上创建同名 Git 标签（例如 v25），推送标签。
+   GitHub Release 先建草稿，附同一份 `.rbxlx`、`.rbxmx`、回执和更新说明；
+   核对文件校验值后公开 Release，表示本次双平台发布完成。
 
-直接在 Studio 发布会绕过这套同步记录。正式更新应走该流程；紧急手动发布后必须
-核对实际源码与构建并补记，而不能把未知线上内容标记成某个 Git 版本。
-新模块未同步、导入包缺少 BuildInfo 或旧 Studio 工程混入脚本都可能造成运行差异；
-推荐打开该次完整 `.rbxlx` 验证。手动导入包时将 BuildInfo 放回 ReplicatedStorage。
+普通代码提交不等于游戏发布。每次完成一批修改并验证通过后进行一次正式发布。
+GitHub Release 与 Roblox 发布不能原子地同时完成，因此允许短暂不同步，但不得
+在 Roblox 尚未确认成功时把 Release 标记为已上线。
 
-## 失败与恢复
+## 发布回执
 
-- 验证或凭证配置失败：不会请求 Roblox，修复后重新运行。
-- 尚未尝试 Roblox 上传的草稿：原提交重跑可补齐附件，再尝试一次上传。
-- 已保存 Roblox 版本回执但 GitHub 最终发布失败：在原 Actions 运行中选择重跑，
-  将跳过 Roblox 上传，只补完 GitHub 发布。
-- Roblox 上传超时、进程中断、回执持久保存失败：远端可能已经发布，因此流程停在
-  `attempted`，绝不自动重复 POST。不要删除草稿、状态附件或版本标签来绕过保护。
-- 恢复时先在 Roblox 版本历史及新服务器核对：目标 Place、游戏版本、构建提交 SHA
-  和具体平台版本。确认确实是此构建后，从 `main` 重新触发工作流，在 `source_commit` 填入原回执中的完整提交 SHA，填入核实的
-  `recovery_version`；流程记录人工恢复依据并只完成 GitHub 发布。即使 `main` 已前进也使用原 SHA，工作流会验证该提交属于 main 历史并构建原提交。
-  普通“重跑”不能改变原输入。
-  未能核实则保持草稿并调查，不猜版本号。
-- 已公开且身份一致的 Release 重跑不会再发布；不同提交、目标或校验值直接拒绝。
+以下是字段模板，尖括号必须替换为实际核实结果；不要把占位符当成已发布证据。
+回执作为 Release 附件保存，避免为补记平台版本而移动源码标签。
 
-GitHub 的状态附件替换如果中途失败可能造成状态附件缺失，此时必须人工核实，脚本
-不会自行猜测状态。恢复输入由维护者对照平台核验，不能代替线上检查。
+```json
+{
+  "method": "local-studio",
+  "version": "<游戏版本>",
+  "commit": "<完整源码提交 SHA>",
+  "universe_id": 10771400448,
+  "place_id": 116603842981489,
+  "roblox_version": "<实际核实的平台版本号>",
+  "published_at": "<UTC 发布时间>",
+  "sha256": {
+    "SkylineSample.rbxlx": "<SHA-256>",
+    "SkylineSample.rbxmx": "<SHA-256>"
+  },
+  "verification": "<Studio 发布成功与新服务器核对结果>"
+}
+```
 
-## 回退
+## 失败与回退
 
-从已验证的历史版本创建修复分支，更新为新的版本号，完成测试后重新发布。
-不要移动旧标签或覆盖旧 Release。通过 Roblox 控制台紧急恢复也必须补充对应
-版本记录；旧服务器的迁移另行安排。官方维护沿用原 Place，派生项目使用自己的体验。
+- Studio 发布失败或结果不明：先核查版本历史和新服务器，不盲目重发，不公开 Release。
+- Roblox 成功、GitHub 同步失败：保留原构建、提交和平台版本，只补完 GitHub 标签与
+  Release，不重复发布 Roblox。重试前检查已有标签/草稿，不覆盖不同提交的同名版本。
+- 已发布的游戏有问题：从历史版本创建修复分支，用新版本号重新验证和发布，不移动旧标签。
+- Roblox 控制台紧急回退也须补记实际版本对应关系，不能猜测线上内容属于哪个提交。
 
-## 当前验证边界
+## 暂停的云端方案
 
-发布状态机和接口契约使用模拟测试；离线验证包含源码编译、地图与清单检查、纯逻辑。
-真正的 Roblox API 发布、Studio UI 和新服务器回执需要配置发布凭证后执行，准备代码
-本身不代表 v25 已上线。素材授权见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+原发布工作流已移至 `tools/optional-cloud/publish.yml`，不在 `.github/workflows/`
+目录中，GitHub 发布入口已停用。`tools/release.py` 和恢复测试作为备用实现保留，
+不是当前本地发布步骤。`roblox-production` 环境中的目标 ID 保留，当前不需要配置
+`ROBLOX_API_KEY`。以后启用云端方案需重新确认、恢复工作流并配置凭证。
+
+派生项目必须发布到自己的 Roblox 体验。素材授权见
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

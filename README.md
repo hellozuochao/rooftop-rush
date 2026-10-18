@@ -54,4 +54,4 @@ GitHub 仓库：[hellozuochao/rooftop-rush](https://github.com/hellozuochao/roof
 
 本项目自有代码、构建脚本和文档采用 [MIT 许可证](LICENSE)，允许在遵守许可声明要求的情况下修改、分发和商用。第三方音乐、Roblox 内置素材及角色资源不属于本项目的 MIT 授权范围，详见[第三方素材说明](THIRD_PARTY_NOTICES.md)。该许可不授予冒充官方项目或暗示官方背书的权利。历史标签早于 LICENSE 文件的加入；建议从当前已包含许可的源码开始派生项目。
 
-通过 Issues 提交问题和建议，通过 Pull Request 贡献修改。维护者审核合并并负责官方 Roblox 发布；自动检查不代替 Studio 与真机验证。正式发布通过 Actions 的 `Publish game version`：验证后用同一构建发布 Roblox，再公开 GitHub Release 和版本回执。首次需配置发布凭证，详见[发布流程](RELEASING.md)。稳定版本附更新说明与经审核的构建文件，不承诺固定发布周期。请阅读[贡献指南](CONTRIBUTING.md)。
+通过 Issues 提交问题和建议，通过 Pull Request 贡献修改。维护者审核合并并负责官方 Roblox 发布；自动检查不代替 Studio 与真机验证。正式发布采用本地 Studio 测试和发布，再同步对应 GitHub 标签、Release 和版本回执。无需 Roblox API key；GitHub Actions 仅运行构建与验证，详见[发布流程](RELEASING.md)。稳定版本附更新说明与经审核的构建文件，不承诺固定发布周期。请阅读[贡献指南](CONTRIBUTING.md)。

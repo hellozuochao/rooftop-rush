@@ -20,7 +20,7 @@ Use the official [Luau 0.743 tools](https://github.com/luau-lang/luau/releases/t
 python3 tools/verify.py --luau-bin /absolute/path/to/luau-bin
 ```
 
-This builds the place, checks the map and script manifest, compiles sources and runs pure-logic tests. Studio integration, live multiplayer, touch controls and device performance require separate testing. GitHub Actions runs offline checks and saves Studio build artifacts. Ordinary CI does not publish to Roblox. The separate manually dispatched `Publish game version` workflow verifies a build, publishes it to Roblox, records the platform version and artifact hashes, then finalizes its GitHub release. It requires the production environment described in [RELEASING.md](RELEASING.md).
+This builds the place, checks the map and script manifest, compiles sources and runs pure-logic tests. Studio integration, live multiplayer, touch controls and device performance require separate testing. GitHub Actions runs offline checks and saves Studio build artifacts. Ordinary CI does not publish to Roblox. The maintainer tests and publishes locally through Roblox Studio, verifies the live platform version, then creates the matching GitHub tag and Release with the same build and its hashes. No Roblox API key is required. The cloud publishing workflow is disabled and archived under `tools/optional-cloud/`. See [RELEASING.md](RELEASING.md).
 
 ## Source layout and versions
 
